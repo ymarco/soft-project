@@ -35,8 +35,8 @@ def squared_distance(vec1,vec2):
 	assert len(vec1)==len(vec2)==dim
 	return sum((vec1[i]-vec2[i])**2 for i in range(dim))
 
-def closest_centriod_ind(sample,centriods):
-	return min(range(num_clusters),key=lambda i:squared_distance(sample,centriods[i]))
+def closest_centroid_ind(sample,centroids):
+	return min(range(num_clusters),key=lambda i:squared_distance(sample,centroids[i]))
 
 def vecs_sum_iter(vecs):
 	assert all(len(vec)==dim for vec in vecs)
@@ -54,12 +54,8 @@ def vecs_mean(vecs):
 def formatVec(vec):
 	return ",".join(map(str,vec))
 
-def formatVecList(lst):
-	return "\n".join(map(formatVec,lst))
-
-
 all_samples = get_samples_from_stdin()
-centriods = all_samples[:num_clusters]
+centroids = all_samples[:num_clusters]
 
 
 clusters=None
@@ -67,17 +63,18 @@ for _ in range(max_iter):
 	old_clusters=clusters
 	clusters=[[]]*num_clusters
 	for sample in all_samples:
-		closest_cluster=clusters[closest_centriod_ind(sample,centriods)]
+		closest_cluster=clusters[closest_centroid_ind(sample,centroids)]
 		closest_cluster.append(sample)
 
-	# There is a one-to-one correspondence between the clusters and the centriods
-	# (the clusters are a function of the centriods and the constant samples, and
-	# the centriods are a function of the clusters). Thus we can check
-	# for change in the clusters instead of in the centriods.
+	# There is a one-to-one correspondence between the clusters and the centroids
+	# (the clusters are a function of the centroids and the constant samples, and
+	# the centroids are a function of the clusters). Thus we can check
+	# for change in the clusters instead of in the centroids.
 	if clusters==old_clusters: # Deep comparison
 		break
 	for i,cluster in enumerate(clusters):
 		assert len(cluster)>0
-		centriods[i]=vecs_mean(cluster)
+		centroids[i]=vecs_mean(cluster)
 
-print(formatVecList(centriods))
+for centroid in centroids:
+	print(formatVec(centroid))
