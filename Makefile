@@ -1,4 +1,18 @@
 CFLAGS = -ansi -Wall -Wextra -Wno-unused-parameter -pedantic-errors -lm
 
-hw1: kmeans.c
-	$(CC) $(CFLAGS) kmeans.c -o hw1
+
+ifeq ($(O_DEBUG),1)
+	CFLAGS += -g
+endif
+
+ifeq ($(O_RELEASE),1)
+	CFLAGS += -O3 -flto -march=native -pipe -fno-plt
+endif
+
+hw01: kmeans.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+clean :
+	$(RM) hw01
+
+.PHONY : clean
