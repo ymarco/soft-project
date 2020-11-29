@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 int cluster_count;
-float *cluster_sums;
 float *centroids;
 int *cluster_size; /* amount of elements in each cluster */
 int sample_count;
@@ -13,7 +12,7 @@ int dim;
 int max_iters;
 
 /*
- * fill the data in cluster_sums, samples from CSV file stream IN.
+ * fill the data in samples from CSV file stream IN.
  */
 void read_data() {
   float f;
@@ -21,7 +20,6 @@ void read_data() {
   float *cent_arr = centroids;
   int cur_vector = 0;
   int cur_element = 0;
-  int i;
 
   while (scanf("%f%c", &f, &c) == 2) {
     cent_arr[cur_vector * dim + cur_element] = f;
@@ -39,11 +37,6 @@ void read_data() {
       exit(EXIT_FAILURE);
     }
     cent_arr = (cur_vector < cluster_count) ? centroids : samples;
-  }
-  /* I wish we could import string.h */
-  /* memcpy(centroids, cluster_sums, dim * cluster_count); */
-  for (i = 0; i < cluster_count * dim; i++) {
-    cluster_sums[i] = centroids[i];
   }
 }
 
@@ -166,9 +159,7 @@ int main(int argc, char *argv[]) {
   /* We might be able to chain all of these into one big malloc. Not sure its
    * worth it though. Standards after ANSI C just allow variable-sized arrays in
    * stack. */
-  cluster_sums = malloc(sizeof(*cluster_sums) * dim * cluster_count);
   centroids = malloc(sizeof(*centroids) * dim * cluster_count);
-  cluster_sums = malloc(sizeof(*cluster_sums) * cluster_count);
   cluster_size = malloc(sizeof(*cluster_size) * cluster_count);
   samples = malloc(sizeof(*samples) * dim * sample_count);
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
