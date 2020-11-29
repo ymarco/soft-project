@@ -97,17 +97,27 @@ void vector_divide_equal(float *quotient, float denumenator) {
 }
 
 /*
- * update centroid index for sample at index i
+ * Update centroid index for sample at index i.
+ * Return true if the index changed since the last time.
  */
-void update_centroid_for_sample(int i) {
-  sample_cluster_index[i] = closest_centroid_index(i);
+int update_centroid_for_sample(int i) {
+  int c = closest_centroid_index(i);
+  int res = c != sample_cluster_index[i];
+  sample_cluster_index[i] = c;
+  return res;
 }
 
-void mass_cluster_centroid_index_update() {
+/*
+ * Update the cluster indecies of all samples.
+ * Return true if any index changed.
+ */
+int mass_cluster_centroid_index_update() {
   int i;
+  int res = 0;
   for (i = 0; i < sample_count; i++) {
-    update_centroid_for_sample(i);
+    res += res | update_centroid_for_sample(i);
   }
+  return res;
 }
 
 void mass_centroid_update() {
@@ -131,11 +141,6 @@ void mass_centroid_update() {
   for (i = 0; i < cluster_count; i++) {
     vector_divide_equal(&centroids[i * dim], cluster_size[i]);
   }
-}
-
-void iter() {
-  mass_cluster_centroid_index_update();
-  mass_centroid_update();
 }
 
 void print_vectors(float *vectors, int count) {
@@ -171,8 +176,11 @@ int main(int argc, char *argv[]) {
   read_data();
 
   for (i = 0; i < max_iters; i++) {
-    iter();
+    if (!mass_cluster_centroid_index_update()) /* no indecies changed */
+      break;
+    mass_centroid_update();
   }
+  fprintf(stderr, "iters = %d\n", i);
   print_vectors(centroids, cluster_count);
   return 0;
 }
