@@ -27,17 +27,26 @@ void read_data() {
     switch (c) {
     case ',':
       cur_vector++;
+      if (cur_vector > dim)
+        goto err;
       break;
     case '\n':
       cur_element++;
+      if (cur_element > sample_count)
+        goto err;
       cur_vector = 0;
       break;
     default:
-      fprintf(stderr, "Invalid input\n");
-      exit(EXIT_FAILURE);
+      goto err;
     }
     cent_arr = (cur_vector < cluster_count) ? centroids : samples;
   }
+  if (cur_element != sample_count)
+    goto err;
+  return;
+err:
+  fprintf(stderr, "Invalid input\n");
+  exit(EXIT_FAILURE);
 }
 
 /*
@@ -163,6 +172,8 @@ int main(int argc, char *argv[]) {
   cluster_size = malloc(sizeof(*cluster_size) * cluster_count);
   samples = malloc(sizeof(*samples) * dim * sample_count);
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
+
+  assert(cluster_count < sample_count);
 
   read_data();
   /*
