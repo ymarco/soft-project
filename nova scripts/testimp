@@ -18,6 +18,6 @@ else
 	echo Using existing input:
 fi
 cat $input_file_name
-$imp $1 $2 $3 $4 < $input_file_name > $output_file_name
+$imp $1 $2 $3 $4 < $input_file_name | tee $output_file_name
 python -m km.so $1 $2 $3 $4 "$input_file_name" "$output_file_name"
 
