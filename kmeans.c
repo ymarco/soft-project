@@ -165,7 +165,12 @@ int main(int argc, char *argv[]) {
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
 
   read_data();
-
+  /*
+   * the first centroids aren't purely dependent on cluster indecies
+   * so always do at least one iteration
+   */
+  mass_cluster_centroid_index_update();
+  mass_centroid_update();
   for (i = 0; i < max_iters; i++) {
     if (!mass_cluster_centroid_index_update()) /* no indecies changed */
       break;
