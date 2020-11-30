@@ -1,5 +1,7 @@
 CFLAGS = -ansi -Wall -Wextra -Wno-unused-parameter -pedantic-errors -lm
 
+O_DEBUG := 0
+O_RELEASE := 0
 
 ifeq ($(O_DEBUG),1)
 	CFLAGS += -g
