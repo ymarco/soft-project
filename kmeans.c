@@ -142,7 +142,7 @@ void print_vectors(float *vectors, int count) {
   int i;
   for (i = 0; i < dim * count; i++) {
     f = vectors[i];
-    c = (i % dim == 1) ? '\n' : ',';
+    c = ((i + 1) % dim == 0) ? '\n' : ',';
     printf("%.2f%c", f, c);
   }
 }
