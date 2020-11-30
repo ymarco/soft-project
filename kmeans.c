@@ -3,10 +3,10 @@
 #include <stdlib.h>
 
 int cluster_count;
-float *centroids;
+double *centroids;
 int *cluster_size; /* amount of elements in each cluster */
 int sample_count;
-float *samples;
+double *samples;
 int *sample_cluster_index;
 int dim;
 int max_iters;
@@ -15,13 +15,13 @@ int max_iters;
  * fill the data in samples from CSV file stream IN.
  */
 void read_data() {
-  float f;
+  double f;
   char c;
-  float *cent_arr = centroids;
+  double *cent_arr = centroids;
   int cur_vector = 0;
   int cur_element = 0;
 
-  while (scanf("%f%c", &f, &c) == 2) {
+  while (scanf("%lf%c", &f, &c) == 2) {
     cent_arr[cur_element * dim + cur_vector] = f;
     samples[cur_element * dim + cur_vector] = f;
     switch (c) {
@@ -44,8 +44,8 @@ void read_data() {
  * Return the squared distance between v1 and v2, both assumed to be with length
  * dim.
  */
-float squared_distance(float *v1, float *v2) {
-  float res = 0;
+double squared_distance(double *v1, double *v2) {
+  double res = 0;
   int i;
   for (i = 0; i < dim; i++) {
     res += (v1[i] - v2[i]) * (v1[i] - v2[i]);
@@ -57,9 +57,9 @@ float squared_distance(float *v1, float *v2) {
  * Return index of the closest centroid to samples[sample_i]
  */
 int closest_centroid_index(int sample_i) {
-  float min = squared_distance(&centroids[0], &samples[sample_i * dim]);
+  double min = squared_distance(&centroids[0], &samples[sample_i * dim]);
   int min_i = 0;
-  float cur;
+  double cur;
   int centroid_i;
   for (centroid_i = 1; centroid_i < cluster_count; centroid_i++) {
     cur = squared_distance(&centroids[centroid_i * dim],
@@ -73,7 +73,7 @@ int closest_centroid_index(int sample_i) {
 /*
  * sum += vec, by their components
  */
-void vector_plus_equal(float *sum, float *vec) {
+void vector_plus_equal(double *sum, double *vec) {
   int i;
   for (i = 0; i < dim; i++) {
     sum[i] += vec[i];
@@ -82,7 +82,7 @@ void vector_plus_equal(float *sum, float *vec) {
 /*
  * quotient /= denumenator, by quotient's compopnents
  */
-void vector_divide_equal(float *quotient, float denumenator) {
+void vector_divide_equal(double *quotient, double denumenator) {
   int i;
   for (i = 0; i < dim; i++) {
     quotient[i] /= denumenator;
@@ -136,13 +136,13 @@ void mass_centroid_update() {
   }
 }
 
-void print_vectors(float *vectors, int count) {
-  float f;
+void print_vectors(double *vectors, int count) {
+  double f;
   char c;
   int i;
   for (i = 0; i < dim * count; i++) {
     f = vectors[i];
-    c = (i % dim == 1) ? '\n' : ',';
+    c = ((i + 1) % dim == 0) ? '\n' : ',';
     printf("%.2f%c", f, c);
   }
 }
