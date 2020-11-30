@@ -48,6 +48,10 @@ err:
   exit(EXIT_FAILURE);
 }
 
+ double squared(double d){
+  return d*d;
+ }
+
 /*
  * Return the squared distance between v1 and v2, both assumed to be of length
  * dim.
@@ -56,7 +60,7 @@ double squared_distance(double *v1, double *v2) {
   double res = 0;
   int i;
   for (i = 0; i < dim; i++) {
-    res += (v1[i] - v2[i]) * (v1[i] - v2[i]);
+    res += squared(v1[i] - v2[i]);
   }
   return res;
 }
@@ -88,12 +92,12 @@ void vector_plus_equal(double *sum, double *vec) {
   }
 }
 /*
- * quotient /= denumenator, by quotient's compopnents
+ * quotient /= denominator, by quotient's compopnents
  */
-void vector_divide_equal(double *quotient, double denumenator) {
+void vector_divide_equal(double *quotient, double denominator) {
   int i;
   for (i = 0; i < dim; i++) {
-    quotient[i] /= denumenator;
+    quotient[i] /= denominator;
   }
 }
 
@@ -101,24 +105,24 @@ void vector_divide_equal(double *quotient, double denumenator) {
  * Update centroid index for sample at index i.
  * Return true if the index changed since the last time.
  */
-int update_centroid_for_sample(int i) {
+int update_cluster_for_sample(int i) {
   int c = closest_centroid_index(i);
-  int res = c != sample_cluster_index[i];
+  int changed = (c != sample_cluster_index[i]);
   sample_cluster_index[i] = c;
-  return res;
+  return changed;
 }
 
 /*
  * Update the cluster indecies of all samples.
  * Return true if any index changed.
  */
-int mass_cluster_centroid_index_update() {
+int mass_cluster_indices_update() {
   int i;
-  int res = 0;
+  int changed = 0;
   for (i = 0; i < sample_count; i++) {
-    res += res | update_centroid_for_sample(i);
+    changed |= update_cluster_for_sample(i);
   }
-  return res;
+  return changed;
 }
 
 void mass_centroid_update() {
@@ -186,10 +190,10 @@ int main(int argc, char *argv[]) {
    * the first centroids aren't purely dependent on cluster indecies
    * so always do at least one iteration
    */
-  mass_cluster_centroid_index_update();
+  mass_cluster_indices_update();
   mass_centroid_update();
   for (i = 0; i < max_iters; i++) {
-    if (!mass_cluster_centroid_index_update()) /* no indecies changed */
+    if (!mass_cluster_indices_update()) /* no indecies changed */
       break;
     mass_centroid_update();
   }
