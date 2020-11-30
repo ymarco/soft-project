@@ -1,19 +1,31 @@
 import argparse
+
 parser = argparse.ArgumentParser()
 parser.add_argument('K', type=int)
 parser.add_argument('N', type=int)
 parser.add_argument('d', type=int)
 parser.add_argument('MAX_ITER', type=int)
+
+# Todo: remove this line and dprints definition and calls
+parser.add_argument('--verbose','-v','--debug','-d', action='count')
+
 args = parser.parse_args()
 num_clusters=args.K
 num_samples=args.N
 dim=args.d
 max_iter=args.MAX_ITER
-#print(num_clusters, num_samples, dim)
+
+# Todo: remove
+debug=args.verbose
+def dprint(*args):
+	if debug:
+		print(*args)
+
+#dprint(num_clusters, num_samples, dim)
 
 def parseToVec(line):
 	ret = list(map(float,line.split(',')))
-	#print(ret)
+	#dprint(ret)
 	assert len(ret)==dim
 	return ret
 
@@ -51,8 +63,11 @@ def vecs_mean_iter(vecs):
 def vecs_mean(vecs):
 	return list(vecs_mean_iter(vecs))
 
+def formatFloat(num):
+	return '{:.2f}'.format(num)
+
 def formatVec(vec):
-	return ",".join(map(str,vec))
+	return ",".join(map(formatFloat,vec))
 
 all_samples = get_samples_from_stdin()
 centroids = all_samples[:num_clusters]
@@ -61,7 +76,7 @@ centroids = all_samples[:num_clusters]
 clusters=None
 for _ in range(max_iter):
 	old_clusters=clusters
-	clusters=[[]]*num_clusters
+	clusters=[[] for _ in range(num_clusters)]
 	for sample in all_samples:
 		closest_cluster=clusters[closest_centroid_ind(sample,centroids)]
 		closest_cluster.append(sample)
@@ -70,11 +85,12 @@ for _ in range(max_iter):
 	# (the clusters are a function of the centroids and the constant samples, and
 	# the centroids are a function of the clusters). Thus we can check
 	# for change in the clusters instead of in the centroids.
+	dprint(f"clusters = {clusters}\nold_clusters = {old_clusters}")
 	if clusters==old_clusters: # Deep comparison
 		break
 	for i,cluster in enumerate(clusters):
 		assert len(cluster)>0
 		centroids[i]=vecs_mean(cluster)
-
+	dprint(f"centroids = {centroids}")
 for centroid in centroids:
 	print(formatVec(centroid))
