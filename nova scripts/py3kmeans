@@ -1,2 +1,0 @@
-#!/bin/bash
-exec python3.8.5 kmeans.py $@
