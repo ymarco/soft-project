@@ -22,8 +22,8 @@ void read_data() {
   int cur_element = 0;
 
   while (scanf("%f%c", &f, &c) == 2) {
-    cent_arr[cur_vector * dim + cur_element] = f;
-    samples[cur_vector * dim + cur_element] = f;
+    cent_arr[cur_element * dim + cur_vector] = f;
+    samples[cur_element * dim + cur_vector] = f;
     switch (c) {
     case ',':
       cur_vector++;
