@@ -1,0 +1,23 @@
+#!/bin/bash
+imp=$1
+shift
+for x in $5 $1
+do
+	case $x in
+		'-r'|'-g')
+			generate='true'
+			[ "$x" = "$1" ] && shift
+	esac
+done
+input_file_name=input_"$2"_"$3".txt
+output_file_name=output_"$2"_"$3".txt
+if [ "$generate" = 'true' ] || [ ! -f "$input_file_name" ]
+then
+	echo Generating input: && python -m gen_file.so "$2" "$3" > $input_file_name
+else
+	echo Using existing input:
+fi
+cat $input_file_name
+$imp $1 $2 $3 $4 < $input_file_name > $output_file_name
+python -m km.so $1 $2 $3 $4 "$input_file_name" "$output_file_name"
+
