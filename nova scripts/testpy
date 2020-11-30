@@ -1,2 +1,2 @@
 #!/bin/bash
-exec testimp "python3.8.5 kmeans.py" "$@"
+exec $(dirname $0)/testimp "python3.8.5 kmeans.py" "$@"

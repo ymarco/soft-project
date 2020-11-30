@@ -1,23 +1,48 @@
 #!/bin/bash
+scriptdir=$(dirname $0)
 imp=$1
 shift
-for x in $5 $1
+generate=false
+printall=false
+printinput=false
+printoutput=false
+prependingopts=true
+for x in "$@"
 do
 	case $x in
-		'-r'|'-g')
-			generate='true'
-			[ "$x" = "$1" ] && shift
+		'-r'|'--regenerate'|'-g')
+			generate=true
+			;;
+		'-p'|'--print')
+			printall=true
+			;;
+		'-i','--input')
+			printinput=true
+			;;
+		'-o','--output')
+			printoutput=true
+			;;
+		*)
+			prependingopts=false
+			;;
 	esac
+	[ $prependingopts = true ] && shift
 done
+iosdir="$scriptdir/ios"
+mkdir -p $iosdir
 input_file_name=input_"$2"_"$3".txt
 output_file_name=output_"$2"_"$3".txt
-if [ "$generate" = 'true' ] || [ ! -f "$input_file_name" ]
+input_file_path="$iosdir/$input_file_name"
+output_file_path="$iosdir/$output_file_name"
+if [ "$generate" = true ] || [ ! -f "$input_file_path" ]
 then
-	echo Generating input: && python -m gen_file.so "$2" "$3" > $input_file_name
+	printf "Generating input into $input_file_path...\n" && python -m gen_file.so "$2" "$3" > $input_file_path
 else
-	echo Using existing input:
+	printf "Using existing input $input_file_path.\n"
 fi
-cat $input_file_name
-$imp $1 $2 $3 $4 < $input_file_name | tee $output_file_name
-python -m km.so $1 $2 $3 $4 "$input_file_name" "$output_file_name"
-
+[ $printall = true ] || [ $printinput = true ] && prinf "Input:\n" && cat $input_file_path
+printf "\nWriting output from $imp into $output_file_path...\n"
+$imp $1 $2 $3 $4 < $input_file_path > $output_file_path
+[ $printall = true ] || [ $printoutput = true ] && printf "Output:\n" && cat $output_file_path
+printf "\nTester:\n"
+python -m km.so $1 $2 $3 $4 "$input_file_path" "$output_file_path"
