@@ -17,12 +17,12 @@ int max_iters;
 void read_data() {
   double f;
   char c;
-  double *cent_arr = centroids;
   int cur_vector = 0;
   int cur_element = 0;
 
   while (scanf("%lf%c", &f, &c) == 2) {
-    cent_arr[cur_element * dim + cur_vector] = f;
+    if (cur_element < cluster_count)
+      centroids[cur_element * dim + cur_vector] = f;
     samples[cur_element * dim + cur_vector] = f;
     switch (c) {
     case ',':
@@ -39,7 +39,6 @@ void read_data() {
     default:
       goto err;
     }
-    cent_arr = (cur_vector < cluster_count) ? centroids : samples;
   }
   if (cur_element != sample_count)
     goto err;
@@ -50,7 +49,7 @@ err:
 }
 
 /*
- * Return the squared distance between v1 and v2, both assumed to be with length
+ * Return the squared distance between v1 and v2, both assumed to be of length
  * dim.
  */
 double squared_distance(double *v1, double *v2) {
@@ -164,6 +163,11 @@ int main(int argc, char *argv[]) {
   dim = atoi(argv[3]);
   max_iters = atoi(argv[4]);
 
+  assert(cluster_count > 0);
+  assert(sample_count > 0);
+  assert(dim > 0);
+  assert(max_iters > 0);
+  assert(cluster_count < sample_count);
   /* printf("cluster_count: %d, sample_count:", ); */
   /* We might be able to chain all of these into one big malloc. Not sure its
    * worth it though. Standards after ANSI C just allow variable-sized arrays in
@@ -173,8 +177,10 @@ int main(int argc, char *argv[]) {
   samples = malloc(sizeof(*samples) * dim * sample_count);
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
 
-  assert(cluster_count < sample_count);
-
+  if (!(centroids || cluster_size || samples || sample_cluster_index)) {
+    fprintf(stderr, "allocation faliure\n");
+    exit(EXIT_FAILURE);
+  }
   read_data();
   /*
    * the first centroids aren't purely dependent on cluster indecies
@@ -189,5 +195,11 @@ int main(int argc, char *argv[]) {
   }
   fprintf(stderr, "iters = %d\n", i);
   print_vectors(centroids, cluster_count);
+
+  free(centroids);
+  free(cluster_size);
+  free(samples);
+  free(sample_cluster_index);
+
   return 0;
 }
