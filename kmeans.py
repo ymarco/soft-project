@@ -15,18 +15,29 @@ num_samples=args.N
 dim=args.d
 max_iter=args.MAX_ITER
 
+def soft_assert(cond,msg):
+	if not cond:
+		print(msg)
+		exit()
+
+soft_assert(num_clusters>0, "K must be a positive integer (bigger than 0)")
+soft_assert(num_clusters<num_samples,"K must be smaller than N.")
+soft_assert(dim>0,"d must be a positive integer (bigger than 0).")
+soft_assert(max_iter>=0, "MAX_ITER must be a non-negative integer.")
+
 # Todo: remove
+import sys
 debug=args.verbose
 def dprint(*args):
 	if debug:
-		print(*args)
+		print(*args, file=sys.stderr)
 
 #dprint(num_clusters, num_samples, dim)
 
 def parseToVec(line):
 	ret = list(map(float,line.split(',')))
 	#dprint(ret)
-	assert len(ret)==dim
+	assert len(ret)==dim # Todo: remove all asserts
 	return ret
 
 
