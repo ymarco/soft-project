@@ -13,7 +13,7 @@ max_iter=args.MAX_ITER
 
 def parseToVec(line):
 	ret = list(map(float,line.split(',')))
-	print(ret)
+	#print(ret)
 	assert len(ret)==dim
 	return ret
 
