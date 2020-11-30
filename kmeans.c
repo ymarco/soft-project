@@ -76,8 +76,8 @@ int closest_centroid_index(int sample_i) {
   for (centroid_i = 1; centroid_i < cluster_count; centroid_i++) {
     cur = squared_distance(&centroids[centroid_i * dim],
                            &samples[sample_i * dim]);
-    min_i = cur < min ? centroid_i : min_i;
-    min = cur < min ? cur : min;
+    min_i = (cur < min ? centroid_i : min_i);
+    min = (cur < min ? cur : min);
   }
   return min_i;
 }
@@ -142,7 +142,7 @@ void mass_centroid_update() {
     cluster_size[centroid_i]++;
     vector_plus_equal(&centroids[centroid_i * dim], &samples[sample_i * dim]);
   }
-  /* devide clusters by their size to get the average */
+  /* divide clusters by their size to get the average */
   for (i = 0; i < cluster_count; i++) {
     vector_divide_equal(&centroids[i * dim], cluster_size[i]);
   }
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
 
   if (!(centroids || cluster_size || samples || sample_cluster_index)) {
-    fprintf(stderr, "allocation faliure\n");
+    fprintf(stderr, "allocation failure\n");
     exit(EXIT_FAILURE);
   }
   read_data();
