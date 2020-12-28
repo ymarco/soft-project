@@ -185,7 +185,7 @@ static int parse_py_list_to_vecs(PyObject *listObj, double *vecs) {
       return 0;
     }
     for (int j = 0; j < dim; j++) {
-      PyObject *e = PyList_GetItem(vec_list_obj, i);
+      PyObject *e = PyList_GetItem(vec_list_obj, j);
       if (!PyFloat_Check(e)) {
         fprintf(stderr, "vec item is not a float\n");
         return 0;
