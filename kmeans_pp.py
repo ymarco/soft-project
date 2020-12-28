@@ -40,12 +40,12 @@ def min_squared_distance(vec, vecs):
 RANDOMIZATION_SEED = 0
 random.seed(RANDOMIZATION_SEED)
 samples = pandas.read_csv(input_filename, header=None).to_numpy()
-centriods = [samples[numpy.random.choice(num_samples)]]
+centroids = [samples[numpy.random.choice(num_samples)]]
 for _ in range(num_clusters - 1):
     weights = numpy.fromiter(
-        (min_squared_distance(sample, centriods) for sample in samples), float
+        (min_squared_distance(sample, centroids) for sample in samples), float
     )
     weights /= numpy.sum(weights)
-    centriods.append(samples[numpy.random.choice(num_samples, p=weights)])
+    centroids.append(samples[numpy.random.choice(num_samples, p=weights)])
 
-print(centriods)
+print(centroids)
