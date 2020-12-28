@@ -49,8 +49,6 @@ for _ in range(num_clusters - 1):
     weights /= numpy.sum(weights)
     centroids.append(samples[numpy.random.choice(num_samples, p=weights)])
 
-print(centroids)
-
 
 mks.set_dim(dim)
 x = [a.tolist() for a in centroids]
