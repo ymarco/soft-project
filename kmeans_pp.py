@@ -43,9 +43,9 @@ np.random.seed(RANDOMIZATION_SEED)
 samples = pandas.read_csv(input_filename, header=None).to_numpy()
 centriod_inds = [np.random.choice(num_samples)]
 for _ in range(num_clusters - 1):
-	centriods = np.fromiter(sample[i] for i in centriod_inds, float)
+    centriods = np.fromiter((sample[i] for i in centriod_inds), float)
     weights = np.fromiter(
-        (min_squared_distance(sample, array(centriods) for sample in samples), float
+        (min_squared_distance(sample, array(centriods)) for sample in samples), float
     )
     weights /= np.sum(weights)
     centriod_inds.append(np.random.choice(num_samples, p=weights))
