@@ -172,7 +172,8 @@ static PyObject *set_dim(PyObject *self, PyObject *args) {
 
 static int parse_py_list_to_vecs(PyObject *listObj, double *vecs) {
   int vec_count = PyList_Size(listObj);
-  for (int i = 0; i < vec_count; i++) {
+  int i, j;
+  for (i = 0; i < vec_count; i++) {
     double *vec = &vecs[dim * i];
     PyObject *vec_list_obj = PyList_GetItem(listObj, i);
     if (!PyList_Check(vec_list_obj)) {
@@ -184,7 +185,7 @@ static int parse_py_list_to_vecs(PyObject *listObj, double *vecs) {
       fprintf(stderr, "vec length isn't dim\n");
       return 0;
     }
-    for (int j = 0; j < dim; j++) {
+    for (j = 0; j < dim; j++) {
       PyObject *e = PyList_GetItem(vec_list_obj, j);
       if (!PyFloat_Check(e)) {
         fprintf(stderr, "vec item is not a float\n");
