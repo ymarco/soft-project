@@ -1,4 +1,4 @@
-import argparse, random, pandas, numpy
+import argparse, random, pandas, numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("K", type=int)
@@ -30,22 +30,22 @@ soft_assert(max_iter >= 0, "MAX_ITER must be a non-negative integer.")
 
 
 def squared_distances(vec, vecs):
-    return numpy.sum((vecs - vec) ** 2, axis=1)
+    return np.sum((vecs - vec) ** 2, axis=1)
 
 
 def min_squared_distance(vec, vecs):
-    return numpy.amin(squared_distances(vec, vecs))
+    return np.amin(squared_distances(vec, vecs))
 
 
 RANDOMIZATION_SEED = 0
-random.seed(RANDOMIZATION_SEED)
+np.random.seed(RANDOMIZATION_SEED)
 samples = pandas.read_csv(input_filename, header=None).to_numpy()
-centriods = [samples[numpy.random.choice(num_samples)]]
+centriods = [samples[np.random.choice(num_samples)]]
 for _ in range(num_clusters - 1):
-    weights = numpy.fromiter(
+    weights = np.fromiter(
         (min_squared_distance(sample, centriods) for sample in samples), float
     )
-    weights /= numpy.sum(weights)
-    centriods.append(samples[numpy.random.choice(num_samples, p=weights)])
+    weights /= np.sum(weights)
+    centriods.append(samples[np.random.choice(num_samples, p=weights)])
 
 print(centriods)
