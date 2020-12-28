@@ -1,5 +1,5 @@
 import argparse, random, pandas, numpy as np
-import mykmeanssp as mks
+#import mykmeanssp as mks
 
 parser = argparse.ArgumentParser()
 parser.add_argument("K", type=int)
@@ -41,16 +41,16 @@ def min_squared_distance(vec, vecs):
 RANDOMIZATION_SEED = 0
 np.random.seed(RANDOMIZATION_SEED)
 samples = pandas.read_csv(input_filename, header=None).to_numpy()
-centriod_inds = [np.random.choice(num_samples)]
+centroid_inds = [np.random.choice(num_samples)]
 for _ in range(num_clusters - 1):
-    centriods = np.fromiter((sample[i] for i in centriod_inds), float)
+    centroids = np.array([samples[i] for i in centroid_inds])
     weights = np.fromiter(
-        (min_squared_distance(sample, array(centriods)) for sample in samples), float
+        (min_squared_distance(sample, centroids) for sample in samples), float
     )
     weights /= np.sum(weights)
-    centriod_inds.append(np.random.choice(num_samples, p=weights))
+    centroid_inds.append(np.random.choice(num_samples, p=weights))
 
-print(",".join(map(str, centriod_inds)))
+print(",".join(map(str, centroid_inds)))
 mks.set_dim(dim)
 x = [a.tolist() for a in centroids]
 mks.set_centroids(x)
