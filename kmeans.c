@@ -169,6 +169,32 @@ static PyObject *set_dim(PyObject *self, PyObject *args) {
   return Py_None;
 }
 
+static int parse_py_list_to_vecs(PyObject *listObj, double *vecs) {
+  int vec_count = PyList_Size(listObj);
+  for (int i = 0; i < vec_count; i++) {
+    double *vec = &vecs[dim * i];
+    PyObject *vec_list_obj = PyList_GetItem(listObj, i);
+    if (!PyList_Check(vec_list_obj)) {
+      fprintf(stderr, "not a vec level list\n");
+      return 0;
+    }
+    int vec_len = PyList_Size(vec_list_obj);
+    if (vec_len != dim) {
+      fprintf(stderr, "vec length isn't dim\n");
+      return 0;
+    }
+    for (int j = 0; j < dim; j++) {
+      PyObject *e = PyList_GetItem(vec_list_obj, i);
+      if (!PyFloat_Check(e)) {
+        fprintf(stderr, "vec item is not a float\n");
+        return 0;
+      }
+      vec[j] = PyFloat_AsDouble(e);
+    }
+  }
+  return 1;
+}
+
 /*  define functions in module */
 static PyMethodDef methods[] = {
     {"set_dim", set_dim, METH_VARARGS, "initialize dim"},
