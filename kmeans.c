@@ -160,8 +160,18 @@ void print_vectors(double *vectors, int count) {
   }
 }
 
+static PyObject *set_dim(PyObject *self, PyObject *args) {
+  int dim_;
+  if (!PyArg_ParseTuple(args, "i", &dim_))
+    return NULL;
+  assert(dim > 0);
+  dim = dim_;
+  return Py_None;
+}
+
 /*  define functions in module */
 static PyMethodDef methods[] = {
+    {"set_dim", set_dim, METH_VARARGS, "initialize dim"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
@@ -174,12 +184,10 @@ int main(int argc, char *argv[]) {
   assert(argc == 5);
   cluster_count = atoi(argv[1]);
   sample_count = atoi(argv[2]);
-  dim = atoi(argv[3]);
   max_iters = atoi(argv[4]);
 
   assert(cluster_count > 0);
   assert(sample_count > 0);
-  assert(dim > 0);
   assert(max_iters > 0);
   assert(cluster_count < sample_count);
   /* printf("cluster_count: %d, sample_count:", ); */
