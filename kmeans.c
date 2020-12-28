@@ -206,10 +206,23 @@ static PyObject *set_centroids(PyObject *self, PyObject *args) {
   return Py_None;
 }
 
+static PyObject *set_samples(PyObject *self, PyObject *args) {
+  PyObject *listObj;
+  if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &listObj))
+    return NULL;
+  sample_count = PyList_Size(listObj);
+  samples = malloc(sizeof(*samples) * dim * sample_count);
+  sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
+  parse_py_list_to_vecs(listObj, samples);
+  return Py_None;
+}
+static PyObject *iterate(PyObject *self, PyObject *args) { return Py_None; }
+
 /*  define functions in module */
 static PyMethodDef methods[] = {
     {"set_dim", set_dim, METH_VARARGS, "initialize dim"},
     {"set_centroids", set_centroids, METH_VARARGS, "initialize centroids"},
+    {"set_samples", set_samples, METH_VARARGS, "initialize samples"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
@@ -220,18 +233,14 @@ PyMODINIT_FUNC PyInit_mykmeanssp(void) { return PyModule_Create(&mod_def); }
 int main(int argc, char *argv[]) {
   int i;
   assert(argc == 5);
-  sample_count = atoi(argv[2]);
   max_iters = atoi(argv[4]);
 
-  assert(sample_count > 0);
   assert(max_iters > 0);
   assert(cluster_count < sample_count);
   /* printf("cluster_count: %d, sample_count:", ); */
   /* We might be able to chain all of these into one big malloc. Not sure its
    * worth it though. Standards after ANSI C just allow variable-sized arrays in
    * stack. */
-  samples = malloc(sizeof(*samples) * dim * sample_count);
-  sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
 
   if (!(centroids || cluster_size || samples || sample_cluster_index)) {
     fprintf(stderr, "allocation failure\n");
