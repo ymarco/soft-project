@@ -1,3 +1,6 @@
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,9 +51,7 @@ err:
   exit(EXIT_FAILURE);
 }
 
- double squared(double d){
-  return d*d;
- }
+double squared(double d) { return d * d; }
 
 /*
  * Return the squared distance between v1 and v2, both assumed to be of length
@@ -158,6 +159,15 @@ void print_vectors(double *vectors, int count) {
     printf("%.2f%c", f, c);
   }
 }
+
+/*  define functions in module */
+static PyMethodDef methods[] = {
+    {NULL, NULL, 0, NULL}};
+
+static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
+                                       "Some docs", -1, methods};
+
+PyMODINIT_FUNC PyInit_mykmeanssp(void) { return PyModule_Create(&mod_def); }
 
 int main(int argc, char *argv[]) {
   int i;
