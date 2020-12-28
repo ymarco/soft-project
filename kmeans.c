@@ -245,7 +245,7 @@ static PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
-                                       "Some docs", -1, methods};
+                                     "Some docs", -1, methods};
 
 PyMODINIT_FUNC PyInit_mykmeanssp(void) { return PyModule_Create(&mod_def); }
 
