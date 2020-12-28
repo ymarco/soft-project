@@ -1,5 +1,5 @@
 import argparse, random, pandas, numpy as np
-#import mykmeanssp as mks
+import mykmeanssp as mks
 
 parser = argparse.ArgumentParser()
 parser.add_argument("K", type=int)
