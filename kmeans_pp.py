@@ -1,4 +1,5 @@
 import argparse, random, pandas, numpy
+import mykmeanssp as mks
 
 parser = argparse.ArgumentParser()
 parser.add_argument("K", type=int)
@@ -49,3 +50,11 @@ for _ in range(num_clusters - 1):
     centroids.append(samples[numpy.random.choice(num_samples, p=weights)])
 
 print(centroids)
+
+
+mks.set_dim(dim)
+x = [a.tolist() for a in centroids]
+mks.set_centroids(x)
+mks.set_samples(samples.tolist())
+mks.iterate(max_iter)
+mks.print_centroids()
