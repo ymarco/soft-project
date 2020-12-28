@@ -195,9 +195,21 @@ static int parse_py_list_to_vecs(PyObject *listObj, double *vecs) {
   return 1;
 }
 
+static PyObject *set_centroids(PyObject *self, PyObject *args) {
+  PyObject *listObj;
+  if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &listObj))
+    return NULL;
+  cluster_count = PyList_Size(listObj);
+  centroids = malloc(sizeof(*centroids) * dim * cluster_count);
+  cluster_size = malloc(sizeof(*cluster_size) * cluster_count);
+  parse_py_list_to_vecs(listObj, centroids);
+  return Py_None;
+}
+
 /*  define functions in module */
 static PyMethodDef methods[] = {
     {"set_dim", set_dim, METH_VARARGS, "initialize dim"},
+    {"set_centroids", set_centroids, METH_VARARGS, "initialize centroids"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
@@ -208,11 +220,9 @@ PyMODINIT_FUNC PyInit_mykmeanssp(void) { return PyModule_Create(&mod_def); }
 int main(int argc, char *argv[]) {
   int i;
   assert(argc == 5);
-  cluster_count = atoi(argv[1]);
   sample_count = atoi(argv[2]);
   max_iters = atoi(argv[4]);
 
-  assert(cluster_count > 0);
   assert(sample_count > 0);
   assert(max_iters > 0);
   assert(cluster_count < sample_count);
@@ -220,8 +230,6 @@ int main(int argc, char *argv[]) {
   /* We might be able to chain all of these into one big malloc. Not sure its
    * worth it though. Standards after ANSI C just allow variable-sized arrays in
    * stack. */
-  centroids = malloc(sizeof(*centroids) * dim * cluster_count);
-  cluster_size = malloc(sizeof(*cluster_size) * cluster_count);
   samples = malloc(sizeof(*samples) * dim * sample_count);
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
 
