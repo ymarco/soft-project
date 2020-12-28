@@ -166,6 +166,7 @@ static PyObject *set_dim(PyObject *self, PyObject *args) {
     return NULL;
   assert(dim > 0);
   dim = dim_;
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
@@ -203,6 +204,7 @@ static PyObject *set_centroids(PyObject *self, PyObject *args) {
   centroids = malloc(sizeof(*centroids) * dim * cluster_count);
   cluster_size = malloc(sizeof(*cluster_size) * cluster_count);
   parse_py_list_to_vecs(listObj, centroids);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
@@ -214,6 +216,7 @@ static PyObject *set_samples(PyObject *self, PyObject *args) {
   samples = malloc(sizeof(*samples) * dim * sample_count);
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
   parse_py_list_to_vecs(listObj, samples);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 static PyObject *iterate(PyObject *self, PyObject *args) {
@@ -232,6 +235,7 @@ static PyObject *iterate(PyObject *self, PyObject *args) {
     mass_centroid_update();
   }
   fprintf(stderr, "iters = %d\n", i);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
