@@ -239,6 +239,12 @@ static PyObject *iterate(PyObject *self, PyObject *args) {
   return Py_None;
 }
 
+static PyObject *print_centroids(PyObject *self, PyObject *args) {
+  print_vectors(centroids, cluster_count);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 /*  define functions in module */
 static PyMethodDef methods[] = {
     {"set_dim", set_dim, METH_VARARGS, "initialize dim"},
@@ -246,6 +252,7 @@ static PyMethodDef methods[] = {
     {"set_samples", set_samples, METH_VARARGS, "initialize samples"},
     {"iterate", iterate, METH_VARARGS,
      "Perform n iterations of centroid optimization"},
+    {"print_centroids", print_centroids, METH_VARARGS, "print centroids"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
@@ -271,8 +278,6 @@ int main(int argc, char *argv[]) {
    * the first centroids aren't purely dependent on cluster indecies
    * so always do at least one iteration
    */
-  print_vectors(centroids, cluster_count);
-
   free(centroids);
   free(cluster_size);
   free(samples);
