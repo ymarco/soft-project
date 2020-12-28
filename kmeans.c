@@ -216,13 +216,32 @@ static PyObject *set_samples(PyObject *self, PyObject *args) {
   parse_py_list_to_vecs(listObj, samples);
   return Py_None;
 }
-static PyObject *iterate(PyObject *self, PyObject *args) { return Py_None; }
+static PyObject *iterate(PyObject *self, PyObject *args) {
+  if (!PyArg_ParseTuple(args, "i", &max_iters))
+    return NULL;
+  if (max_iters <= 0) {
+    fprintf(stderr, "max_iters <= 0\n");
+    return NULL;
+  };
+  mass_cluster_indices_update();
+  mass_centroid_update();
+  int i;
+  for (i = 0; i < max_iters; i++) {
+    if (!mass_cluster_indices_update()) /* no indecies changed */
+      break;
+    mass_centroid_update();
+  }
+  fprintf(stderr, "iters = %d\n", i);
+  return Py_None;
+}
 
 /*  define functions in module */
 static PyMethodDef methods[] = {
     {"set_dim", set_dim, METH_VARARGS, "initialize dim"},
     {"set_centroids", set_centroids, METH_VARARGS, "initialize centroids"},
     {"set_samples", set_samples, METH_VARARGS, "initialize samples"},
+    {"iterate", iterate, METH_VARARGS,
+     "Perform n iterations of centroid optimization"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
@@ -231,11 +250,8 @@ static struct PyModuleDef mod_def = {PyModuleDef_HEAD_INIT, "mykmeanssp",
 PyMODINIT_FUNC PyInit_mykmeanssp(void) { return PyModule_Create(&mod_def); }
 
 int main(int argc, char *argv[]) {
-  int i;
   assert(argc == 5);
-  max_iters = atoi(argv[4]);
 
-  assert(max_iters > 0);
   assert(cluster_count < sample_count);
   /* printf("cluster_count: %d, sample_count:", ); */
   /* We might be able to chain all of these into one big malloc. Not sure its
@@ -251,14 +267,6 @@ int main(int argc, char *argv[]) {
    * the first centroids aren't purely dependent on cluster indecies
    * so always do at least one iteration
    */
-  mass_cluster_indices_update();
-  mass_centroid_update();
-  for (i = 0; i < max_iters; i++) {
-    if (!mass_cluster_indices_update()) /* no indecies changed */
-      break;
-    mass_centroid_update();
-  }
-  fprintf(stderr, "iters = %d\n", i);
   print_vectors(centroids, cluster_count);
 
   free(centroids);
