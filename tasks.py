@@ -3,9 +3,14 @@
 from invoke import task
 import sys
 
+
 @task
 def build(c):
-    c.run("python3 setup.py build_ext --inplace")
+    try:
+        c.run("python3.8.5 setup.py build_ext --inplace")
+    except:
+        c.run("python3 setup.py build_ext --inplace")
+
 
 @task
 def delete(c):
