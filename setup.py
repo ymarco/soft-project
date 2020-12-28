@@ -2,7 +2,7 @@
 
 from distutils.core import setup, Extension
 
-module1 = Extension("mykmeansssp", sources=["kmeans.c"])
+module1 = Extension("mykmeanssp", sources=["kmeans.c"])
 
 setup(
     name="PackageName",
