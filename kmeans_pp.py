@@ -1,5 +1,5 @@
 import argparse, random, pandas, numpy as np
-#import mykmeanssp as mks
+import mykmeanssp as mks
 
 parser = argparse.ArgumentParser()
 parser.add_argument("K", type=int)
@@ -36,7 +36,7 @@ centroid_inds = [np.random.choice(num_samples)]
 for _ in range(num_clusters - 1):
     centroids = samples[centroid_inds]
     diffs = samples[:,np.newaxis]-centroids # diffs[i][j] is samples[i]-centroids[j].
-    squared_distances = np.sum(diffs**2,axis=2)
+    squared_distances = np.sum(diffs**2,axis=2) 
     min_squared_distances = np.min(squared_distances,axis=1)
     probs = min_squared_distances/np.sum(min_squared_distances)
     centroid_inds.append(np.random.choice(num_samples, p=probs))
