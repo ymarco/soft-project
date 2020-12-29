@@ -40,6 +40,7 @@ for _ in range(num_clusters - 1):
     min_squared_distances = np.min(squared_distances,axis=1)
     probs = min_squared_distances/np.sum(min_squared_distances)
     centroid_inds.append(np.random.choice(num_samples, p=probs))
+centroids = samples[centroid_inds]
 
 print(",".join(map(str, centroid_inds)))
 mks.set_dim(dim)
