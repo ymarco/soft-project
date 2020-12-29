@@ -166,8 +166,7 @@ static PyObject *set_dim(PyObject *self, PyObject *args) {
     return NULL;
   assert(dim > 0);
   dim = dim_;
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static int parse_py_list_to_vecs(PyObject *listObj, double *vecs) {
@@ -205,8 +204,7 @@ static PyObject *set_centroids(PyObject *self, PyObject *args) {
   centroids = malloc(sizeof(*centroids) * dim * cluster_count);
   cluster_size = malloc(sizeof(*cluster_size) * cluster_count);
   parse_py_list_to_vecs(listObj, centroids);
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *set_samples(PyObject *self, PyObject *args) {
@@ -217,8 +215,7 @@ static PyObject *set_samples(PyObject *self, PyObject *args) {
   samples = malloc(sizeof(*samples) * dim * sample_count);
   sample_cluster_index = malloc(sizeof(*sample_cluster_index) * sample_count);
   parse_py_list_to_vecs(listObj, samples);
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 static PyObject *iterate(PyObject *self, PyObject *args) {
   if (!PyArg_ParseTuple(args, "i", &max_iters))
@@ -236,14 +233,12 @@ static PyObject *iterate(PyObject *self, PyObject *args) {
     mass_centroid_update();
   }
   fprintf(stderr, "iters = %d\n", i);
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 static PyObject *print_centroids(PyObject *self, PyObject *args) {
   print_vectors(centroids, cluster_count);
-  Py_INCREF(Py_None);
-  return Py_None;
+  Py_RETURN_NONE;
 }
 
 /*  define functions in module */

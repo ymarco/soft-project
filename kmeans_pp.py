@@ -1,4 +1,7 @@
-import argparse, random, pandas, numpy as np
+import argparse
+import random
+import pandas
+import numpy as np
 import mykmeanssp as mks
 
 parser = argparse.ArgumentParser()
@@ -31,18 +34,61 @@ soft_assert(max_iter >= 0, "MAX_ITER must be a non-negative integer.")
 
 RANDOMIZATION_SEED = 0
 np.random.seed(RANDOMIZATION_SEED)
-samples = pandas.read_csv(input_filename, header=None).to_numpy()
-centroid_inds = [np.random.choice(num_samples)]
-for _ in range(num_clusters - 1):
-    centroids = samples[centroid_inds]
-    diffs = samples[:,np.newaxis]-centroids # diffs[i][j] is samples[i]-centroids[j].
-    squared_distances = np.sum(diffs**2,axis=2) 
-    min_squared_distances = np.min(squared_distances,axis=1)
-    probs = min_squared_distances/np.sum(min_squared_distances)
-    centroid_inds.append(np.random.choice(num_samples, p=probs))
-centroids = samples[centroid_inds]
 
-print(",".join(map(str, centroid_inds)))
+
+def squared_distances(samples, centroids):
+    """
+        Returns array res of shape (len(samples),len(centroids),)
+    for which res[i][j] is the squared distance between sample[i]
+    and centroid[j].
+    """
+    diffs = samples[:, np.newaxis] - centroids
+    # diffs[i][j] is samples[i]-centroids[j].
+    res = np.sum(diffs**2, axis=2)
+    return res
+
+
+def min_squared_distances(samples, centroids):
+    """
+    Returns array res of shape (len(samples),)
+    for which res[i] is the minimal squared distance between sample[i] and
+    the centroids.
+    """
+    res = np.min(squared_distances(samples, centroids), axis=1)
+    return res
+
+
+def weights_to_probs(weights):
+    """
+    Converts weights to probabilities summing to one
+    by dividing each weight by the the weights' total sum.
+    """
+    return weights / np.sum(weights)
+
+
+def probs_for_next_centroid_choice(samples, centroids):
+    return weights_to_probs(min_squared_distances(samples, centroids))
+
+
+def choose_new_centroid_ind(samples, centroids):
+    return np.random.choice(len(samples), p=probs_for_next_centroid_choice(samples, centroids))
+
+samples = pandas.read_csv(input_filename, header=None).to_numpy()
+
+centroid_inds = []
+centroids = []
+
+
+def add_centroid_by_ind(centroid_ind):
+    global centroid_inds, centroids
+    centroid_inds.append(centroid_ind)
+    centroids = samples[centroid_inds]
+
+add_centroid_by_ind(np.random.choice(num_samples))
+for _ in range(num_clusters - 1):
+    add_centroid_by_ind(choose_new_centroid_ind(samples, centroids))
+
+print(",".join(map(str, centroid_inds)))  # print centroid indices
 mks.set_dim(dim)
 x = [a.tolist() for a in centroids]
 mks.set_centroids(x)
