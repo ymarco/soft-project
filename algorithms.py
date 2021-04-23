@@ -87,6 +87,3 @@ def qr_decomposition_destructive(mat):
 
     return q.transpose(), r
 
-
-A = np.zeros((4, 4))
-print(qr_decomposition_destructive(A))
