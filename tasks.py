@@ -23,3 +23,12 @@ def delete(c):
 # @task
 # def del(c):
 #     delete(c)
+
+
+@task(pre=[build])
+def run(c, k, n, Random=True, no_Random=False):
+    k = int(k)
+    n = int(n)
+    Random = not no_Random
+    import main
+    main.run(k,n,Random)
