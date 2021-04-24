@@ -79,26 +79,33 @@ def norm_graph_lap(samples):
 
 # Mutates the parameter mat!
 def qr_decomposition_destructive(mat):
-    dim = len(mat)
     dbg = debug_utils.debug_printer(False)
     dbg2 = debug_utils.debug_printer(True)
+    if dbg2.is_active():
+        mat_copy = mat.copy()
+    dim = len(mat)
     if dbg2.is_active():
         expected_q,expected_r = np.linalg.qr(mat)
 
     u = mat.transpose()
-    q = np.empty(u.shape)
-    r = np.empty(u.shape)
+    q = np.zeros(u.shape)
+    r = np.zeros(u.shape)
     dbg.print_multiline_vars({'u':u,'r':r,'q':q})
+    dbg2.print_multiline_vars({'u':u,'r':r,'q':q})
     for i in range(dim):
         norm = np.linalg.norm(u[i])
         r[i,i] = norm
+
+        if i==dim-1:
+            dbg.set_active(True)
+        dbg.print_vars({'i':i})
         dbg.print_vars({'norm':norm})
 
         # Exit on r[i,i]==0 as instructed on the forum.
         soft_assert(norm!=0, "Encountered R[i,i]=0 in qr decomposition!")
+        dbg.print_multiline_vars({'q[i]':q[i], 'u[i]':u[i], 'norm':norm})
         normalized = q[i] = u[i] / norm #if norm != 0 else np.zeros(dim)
         dbg.print_vars({'normalized':normalized})
-        dbg.print_vars({'i':i})
         dbg.print_multiline_vars({'u':u,'r':r,'q':q})
 
         # for j in range(i+1,len(u)):
@@ -106,15 +113,19 @@ def qr_decomposition_destructive(mat):
         #     prod = np.inner(q[i],u[j])
         #     r[i,j] = prod
         #     u[j] -= prod*q[i]
-        #
-        prods_calc = np.inner(normalized, u[i + 1 :])
-        dbg.print_multiline_vars({'prods-calc':prods_calc})
-        prods = r[i,i + 1 :] = np.inner(normalized, u[i + 1 :])
+        
+        remaining_vecs = u[i+1 :]
+        if dbg.is_active():
+            prods_calc = np.inner(normalized, remaining_vecs)
+            dbg.print_multiline_vars({'prods-calc':prods_calc})
+        prods = r[i,i + 1 :] = np.inner(normalized, remaining_vecs)
         dbg.print_multiline_vars({'prods':prods, 'r':r})
-        u[i + 1 :] -= prods[:, np.newaxis] * q[i]
+        dbg2.print_multiline_vars({'prods[:, np.newaxis] * q[i]':prods[:, np.newaxis] * q[i]})
+        remaining_vecs -= prods[:, np.newaxis] * q[i]
 
     dbg2.print("calculated q & r:")
-    dbg2.print_multiline_vars({'q':q, 'expected_q':expected_q, 'r':r, 'expected_r':expected_r})
+    dbg2.print_multiline_vars({'expected_q':expected_q, 'q':q.T,
+     'q.T@q':q@q.T, 'q@r':q.T@r, 'original mat':mat_copy, 'r':r, 'expected_r':expected_r})
     return q.transpose(), r
 
 

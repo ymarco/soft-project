@@ -11,7 +11,12 @@ from algorithms import *
 import debug_utils
 dbg = debug_utils.debug_printer(True)
 #samples = np.array([[0,1],[2,3]])
-samples, cluster_labels = sklearn.datasets.make_blobs(3,2)
+NUM_SAMPLES = 5
+samples, cluster_labels = sklearn.datasets.make_blobs(NUM_SAMPLES,2)
 dbg.print_multiline_vars({'samples':samples})
+
+# I = np.identity(3)
+# qr_decomposition_destructive(I)
+
 u = norm_spectral_cluster(samples)
 dbg.print_vars({'u':u})
