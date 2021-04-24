@@ -8,10 +8,10 @@ import sklearn.datasets, numpy as np
 
 from algorithms import *
 
-from debug_utils import *
-set_debug(True)
+import debug_utils
+dbg = debug_utils.debug_printer(True)
 #samples = np.array([[0,1],[2,3]])
 samples, cluster_labels = sklearn.datasets.make_blobs(3,2)
-print_vars({'samples':samples})
+dbg.print_multiline_vars({'samples':samples})
 u = norm_spectral_cluster(samples)
-print(u)
+dbg.print_vars({'u':u})

@@ -2,8 +2,8 @@ import numpy as np
 EPSILON = 0.0001
 DEBUG = False
 
-from debug_utils import *
-set_debug(False)
+import debug_utils
+dbg = debug_utils.debug_printer(False)
 
 # TODO: use the actual soft_assert
 def soft_assert(cond,msg):
@@ -39,11 +39,11 @@ def weight_adj_mat(samples):
 
 
 # def weight_row_sums(samples):
-# 	return np.sum(weight_adj_mat(samples),axis=0)
+#     return np.sum(weight_adj_mat(samples),axis=0)
 
 # def diag_deg_mat(samples):
-# 	weight_row_sums = np.sum(weight_adj_mat(samples),axis=0)
-# 	return np.diag(weight_row_sums)
+#     weight_row_sums = np.sum(weight_adj_mat(samples),axis=0)
+#     return np.diag(weight_row_sums)
 
 
 def row_sums(mat):
@@ -80,34 +80,42 @@ def norm_graph_lap(samples):
 # Mutates the parameter mat!
 def qr_decomposition_destructive(mat):
     dim = len(mat)
+    dbg = debug_utils.debug_printer(False)
+    dbg2 = debug_utils.debug_printer(True)
+    if dbg2.is_active():
+        expected_q,expected_r = np.linalg.qr(mat)
+
     u = mat.transpose()
     r = np.empty(u.shape)
     q = np.empty(u.shape)
-    print_multline_vars({'u':u,'r':r,'q':q})
+    dbg.print_multiline_vars({'u':u,'r':r,'q':q})
     for i in range(dim):
         norm = np.linalg.norm(u[i])
         r[i,i] = norm
-        print_vars({'norm':norm})
+        dbg.print_vars({'norm':norm})
 
         # Exit on r[i,i]==0 as instructed on the forum.
         soft_assert(norm!=0, "Encountered R[i,i]=0 in qr decomposition!")
         normalized = q[i] = u[i] / norm #if norm != 0 else np.zeros(dim)
-        print_vars({'normalized':normalized})
-        print_vars({'i':i})
-        print_multline_vars({'u':u,'r':r,'q':q})
+        dbg.print_vars({'normalized':normalized})
+        dbg.print_vars({'i':i})
+        dbg.print_multiline_vars({'u':u,'r':r,'q':q})
 
         # for j in range(i+1,len(u)):
 
-        # 	prod = np.inner(q[i],u[j])
-        # 	r[i,j] = prod
-        # 	u[j] -= prod*q[i]
+        #     prod = np.inner(q[i],u[j])
+        #     r[i,j] = prod
+        #     u[j] -= prod*q[i]
         #
         prods_calc = np.inner(normalized, u[i + 1 :])
-        print_multline_vars({'prods-calc':prods_calc})
+        dbg.print_multiline_vars({'prods-calc':prods_calc})
         prods = r[i,i + 1 :] = np.inner(normalized, u[i + 1 :])
-        print_multline_vars({'prods':prods, 'r':r})
+        dbg.print_multiline_vars({'prods':prods, 'r':r})
         u[i + 1 :] -= prods[:, np.newaxis] * q[i]
 
+    dbg2.print("calculated q & r:")
+    dbg2.print_multiline_vars({'q':q, 'r':r})
+    dbg2.print_multiline_vars({'expected_q':expected_q, 'expected_r':expected_r})
     return q.transpose(), r
 
 

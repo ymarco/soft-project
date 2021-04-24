@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 
-DEBUG = True;
-def set_debug(val):
-    global DEBUG
-    DEBUG = val
+class debug_printer:
+    debug = True;
+    def __init__(self, debug):
+        self.debug = debug
+        
+    def set_active(self, debug):
+        self.debug = debug
+    def is_active(self):
+        return self.debug
 
-def print_vars(vardict, equal_sep=' = ', sep=', '):
-    if DEBUG:
+    def print(self, text):
+        if self.debug:
+            print(text)
+
+    def print_vars(self, vardict, equal_sep=' = ', sep=', '):
         for name,val in vardict.items():
-            print(f"{name}{equal_sep}{val}{sep}\n")
+            self.print(f"{name}{equal_sep}{val}{sep}\n")
 
-def print_multline_vars(vardict):
-    print_vars(vardict, ':\n', '\n')
+    def print_multiline_vars(self, vardict):
+        self.print_vars(vardict, ':\n', '\n')
