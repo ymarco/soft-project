@@ -1,19 +1,19 @@
 import numpy as np
 EPSILON = 0.0001
+DEBUG = False
+
+from debug_utils import *
+set_debug(False)
 
 # TODO: use the actual soft_assert
-def soft_assert(x,msg):
-    assert x,msg
+def soft_assert(cond,msg):
+    assert cond,msg
+
+def soft_assert_nonzero_norm(cond):
+    soft_assert(cond,"Encountered norm of zero while normalizing.")
 
 def assert_sqmat(mat):
     return mat.ndim==2 and mat.shape[0]==mat.shape[1]
-
-def print_vars(vardict, equal_sep=' = ', sep=', '):
-    for name,val in vardict.items():
-        print(f"{name}{equal_sep}{val}{sep}\n")
-
-def print_multline_vars(vardict):
-    print_vars(vardict, ':\n', '\n')
 
 def diff_mat(a, b):
     return a[:, np.newaxis] - b
@@ -90,7 +90,7 @@ def qr_decomposition_destructive(mat):
         print_vars({'norm':norm})
 
         # Exit on r[i,i]==0 as instructed on the forum.
-        soft_assert(norm!=0, "encountered r[i,i]=0 in qr decomposition!")
+        soft_assert(norm!=0, "Encountered R[i,i]=0 in qr decomposition!")
         normalized = q[i] = u[i] / norm #if norm != 0 else np.zeros(dim)
         print_vars({'normalized':normalized})
         print_vars({'i':i})
@@ -124,8 +124,15 @@ def qr_iteration(mat):
        e_vec_mat = mat_prod
     return e_val_mat,e_vec_mat
 
+
+def row_norms(mat):
+    return np.linalg.norm(mat,axis=-1)
+
 def normalize_rows(mat):
-   mat /= np.linalg.norm(mat,axis=-1)[:,np.newaxis]
+   mat /= row_norms(mat)[:,np.newaxis]
+
+def all_rows_nonzero(mat):
+    np.all(np.any(mat!=0,axis=-1))
 
 def norm_spectral_cluster(samples):
     dim = len(samples)
@@ -144,5 +151,7 @@ def norm_spectral_cluster(samples):
     relevant_e_vec_inds = e_vals_first_half_sort_inds[:k]
     u = e_vec_mat[:,relevant_e_vec_inds]
 
+    soft_assert(all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
     normalize_rows(u)
     # TODO: use kmeans on u.
+    return u
