@@ -4,21 +4,26 @@ import pandas
 import numpy as np
 import mykmeanssp as mks
 
-parser = argparse.ArgumentParser()
-parser.add_argument("K", type=int)
-parser.add_argument("N", type=int)
-parser.add_argument("d", type=int)
-parser.add_argument("MAX_ITER", type=int)
-parser.add_argument("filename", type=str)
-
 # parser.add_argument('--verbose','-v','--debug','-d', action='count')
 
-args = parser.parse_args()
-num_clusters = args.K
-num_samples = args.N
-dim = args.d
-max_iter = args.MAX_ITER
-input_filename = args.filename
+num_clusters = 0
+num_samples = 0
+dim = 0
+max_iter = 0
+input_filename = ""
+centroids = []
+centroid_inds = []
+
+
+def set_consts(c, s, d, m, i, cc, ci):
+    global num_clusters, num_samples, dim, max_iter, input_filename, centroids, centroid_inds
+    num_clusters = c
+    num_samples = c
+    dim = d
+    max_iter = m
+    input_filename = i
+    centroid = cc
+    centroid_inds = ci
 
 
 def soft_assert(cond, msg):
@@ -27,10 +32,6 @@ def soft_assert(cond, msg):
         exit(1)
 
 
-soft_assert(num_clusters > 0, "K must be a positive integer (bigger than 0)")
-soft_assert(num_clusters < num_samples, "K must be smaller than N.")
-soft_assert(dim > 0, "d must be a positive integer (bigger than 0).")
-soft_assert(max_iter >= 0, "MAX_ITER must be a non-negative integer.")
 
 RANDOMIZATION_SEED = 0
 np.random.seed(RANDOMIZATION_SEED)
@@ -44,7 +45,7 @@ def squared_distances(samples, centroids):
     """
     diffs = samples[:, np.newaxis] - centroids
     # diffs[i][j] is samples[i]-centroids[j].
-    res = np.sum(diffs**2, axis=2)
+    res = np.sum(diffs ** 2, axis=2)
     return res
 
 
@@ -71,12 +72,13 @@ def probs_for_next_centroid_choice(samples, centroids):
 
 
 def choose_new_centroid_ind(samples, centroids):
-    return np.random.choice(len(samples), p=probs_for_next_centroid_choice(samples, centroids))
+    return np.random.choice(
+        len(samples), p=probs_for_next_centroid_choice(samples, centroids)
+    )
 
-samples = pandas.read_csv(input_filename, header=None).to_numpy()
 
-centroid_inds = []
-centroids = []
+# samples = pandas.read_csv(input_filename, header=None).to_numpy()
+
 
 
 def add_centroid_by_ind(centroid_ind):
@@ -84,14 +86,16 @@ def add_centroid_by_ind(centroid_ind):
     centroid_inds.append(centroid_ind)
     centroids = samples[centroid_inds]
 
-add_centroid_by_ind(np.random.choice(num_samples))
-for _ in range(num_clusters - 1):
-    add_centroid_by_ind(choose_new_centroid_ind(samples, centroids))
 
-print(",".join(map(str, centroid_inds)))  # print centroid indices
-mks.set_dim(dim)
-x = [a.tolist() for a in centroids]
-mks.set_centroids(x)
-mks.set_samples(samples.tolist())
-mks.iterate(max_iter)
-mks.print_centroids()
+def run():
+    add_centroid_by_ind(np.random.choice(num_samples))
+    for _ in range(num_clusters - 1):
+        add_centroid_by_ind(choose_new_centroid_ind(samples, centroids))
+
+    print(",".join(map(str, centroid_inds)))  # print centroid indices
+    mks.set_dim(dim)
+    x = [a.tolist() for a in centroids]
+    mks.set_centroids(x)
+    mks.set_samples(samples.tolist())
+    mks.iterate(max_iter)
+    mks.print_centroids()
