@@ -87,7 +87,11 @@ def qr_decomposition_destructive(mat):
     if dbg2.is_active():
         expected_q,expected_r = np.linalg.qr(mat)
 
+    # TODO: assert that the given argument mat is always symmetric
+    # in our code, and optimize by not transposing it at all, using:
+    # u = mat
     u = mat.transpose()
+
     q = np.zeros(u.shape)
     r = np.zeros(u.shape)
     dbg.print_multiline_vars({'u':u,'r':r,'q':q})
