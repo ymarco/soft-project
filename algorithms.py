@@ -71,7 +71,7 @@ def norm_graph_lap(samples):
     # matrix D with useless zeroes. We do that by multiplying the columns of W by D's diagonal and then
     # multiplying the result's rows by the diagonal. Since D is a diagonal matrix this is exactly the same
     # as performing the matrix multiplication.
-    diag_deg_and_weight_prod = weights * rsqrt_row_sums * rsqrt_row_sums[:, np.newaxis]
+    diag_deg_and_weight_prod = (weights * rsqrt_row_sums) * rsqrt_row_sums[:, np.newaxis]
 
     # TODO: consider optimizing by swapping identity matrix calculation with fill_diagonal(1-diagonal)
     return np.identity(len(weights)) - diag_deg_and_weight_prod
@@ -86,8 +86,8 @@ def qr_decomposition_destructive(mat):
         expected_q,expected_r = np.linalg.qr(mat)
 
     u = mat.transpose()
-    r = np.empty(u.shape)
     q = np.empty(u.shape)
+    r = np.empty(u.shape)
     dbg.print_multiline_vars({'u':u,'r':r,'q':q})
     for i in range(dim):
         norm = np.linalg.norm(u[i])
@@ -114,8 +114,7 @@ def qr_decomposition_destructive(mat):
         u[i + 1 :] -= prods[:, np.newaxis] * q[i]
 
     dbg2.print("calculated q & r:")
-    dbg2.print_multiline_vars({'q':q, 'r':r})
-    dbg2.print_multiline_vars({'expected_q':expected_q, 'expected_r':expected_r})
+    dbg2.print_multiline_vars({'q':q, 'expected_q':expected_q, 'r':r, 'expected_r':expected_r})
     return q.transpose(), r
 
 
