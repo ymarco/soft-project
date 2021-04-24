@@ -7,17 +7,21 @@ import sys
 @task
 def build(c):
     try:
-        c.run("python3.8.5 setup.py build_ext --inplace")
-    except:
+        import mykmeanssp
+    except ModuleNotFoundError:
         try:
-            c.run("python3 setup.py build_ext --inplace")
+            c.run("python3.8.5 setup.py build_ext --inplace", hide=True)
         except:
-            c.run("python setup.py build_ext --inplace")
+            try:
+                c.run("python3 setup.py build_ext --inplace")
+            except:
+                c.run("python setup.py build_ext --inplace")
 
 
 @task
 def delete(c):
     c.run("rm *mykmeanssp*.so")
+
 
 # TODO create a task named del without running into python's built in function
 # @task
@@ -26,9 +30,8 @@ def delete(c):
 
 
 @task(pre=[build])
-def run(c, k, n, Random=True, no_Random=False):
-    k = int(k)
-    n = int(n)
+def run(c, k=0, n=0, Random=True, no_Random=False):
     Random = not no_Random
     import main
-    main.run(k,n,Random)
+
+    main.run(k, n, Random)
