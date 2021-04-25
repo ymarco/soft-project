@@ -150,12 +150,18 @@ def qr_iteration(mat):
         q,r = qr_decomposition_destructive(e_val_mat)
         e_val_mat = r@q
         mat_prod = e_vec_mat@q
+
+        is_close_to_convergence = np.allclose(abs(e_vec_mat), abs(mat_prod), atol=EPSILON, rtol=0)
         dbg.print_multiline_vars({
             'e_val_mat (after change)':e_val_mat,
             'mat_prod':mat_prod,
-            'less than epislon cond':np.all(np.abs(np.abs(e_vec_mat)-np.abs(mat_prod))<=EPSILON)
+            'less than epislon cond':is_close_to_convergence
             })
-        if np.all(np.abs(np.abs(e_vec_mat)-np.abs(mat_prod))<=EPSILON):
+
+        # Checking if we're close enough to convergence.
+        # The parameter rtol is for relative tolerance, setting that to zero
+        # makes the comparison non relative. atol=EPSILON is our absoloute tolerance as wanted. 
+        if is_close_to_convergence:
             return e_val_mat,e_vec_mat
         e_vec_mat = mat_prod
     return e_val_mat,e_vec_mat

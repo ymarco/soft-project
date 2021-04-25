@@ -19,4 +19,4 @@ dbg.print_multiline_vars({'samples':samples})
 # qr_decomposition_destructive(I)
 
 u = norm_spectral_cluster(samples)
-dbg.print_vars({'u':u})
+dbg.print_multiline_vars({'u':u})
