@@ -80,11 +80,11 @@ def norm_graph_lap(samples):
 # Mutates the parameter mat!
 def qr_decomposition_destructive(mat):
     dbg = debug_utils.debug_printer(False)
-    dbg2 = debug_utils.debug_printer(True)
-    if dbg2.is_active():
+    dbg2 = debug_utils.debug_printer(False)
+    if dbg2.is_active() or True:
         mat_copy = mat.copy()
     dim = len(mat)
-    if dbg2.is_active():
+    if dbg2.is_active() or True:
         expected_q,expected_r = np.linalg.qr(mat)
 
     # TODO: assert that the given argument mat is always symmetric
@@ -100,7 +100,8 @@ def qr_decomposition_destructive(mat):
         norm = np.linalg.norm(u[i])
         r[i,i] = norm
 
-        if i==dim-1:
+        DEBUG_LAST_QR_DECOMP_ITER = False
+        if i==dim-1 and DEBUG_LAST_QR_DECOMP_ITER:
             dbg.set_active(True)
         dbg.print_vars({'i':i})
         dbg.print_vars({'norm':norm})
@@ -127,23 +128,36 @@ def qr_decomposition_destructive(mat):
         dbg2.print_multiline_vars({'prods[:, np.newaxis] * q[i]':prods[:, np.newaxis] * q[i]})
         remaining_vecs -= prods[:, np.newaxis] * q[i]
 
+    q=q.transpose()
     dbg2.print("calculated q & r:")
-    dbg2.print_multiline_vars({'expected_q':expected_q, 'q':q.T,
-     'q.T@q':q@q.T, 'q@r':q.T@r, 'original mat':mat_copy, 'r':r, 'expected_r':expected_r})
-    return q.transpose(), r
+    dbg2.print_multiline_vars({'expected_q':expected_q, 'q':q,
+     'q.T@q':q.T@q, 'q@r':q@r, 'original mat':mat_copy, 'r':r,
+      'expected_r':expected_r, 'expected_q,q diff':np.abs(expected_q)-np.abs(q)})
+    return q, r
 
 
 def qr_iteration(mat):
+    dbg = debug_utils.debug_printer(False)
     dim = len(mat)
     e_val_mat = mat
     e_vec_mat = np.identity(dim)
-    for _ in range(dim):
-       q,r = qr_decomposition_destructive(e_val_mat)
-       e_val_mat = r@q
-       mat_prod = e_vec_mat@q
-       if np.all(np.abs(np.abs(q)-np.abs(mat_prod))<=EPSILON):
-           return e_val_mat,e_vec_mat
-       e_vec_mat = mat_prod
+    for i in range(dim):
+        dbg.print_multiline_vars({
+            'qr_iteration iteration number':i,
+            'e_val_mat':e_val_mat,
+            'e_vec_mat':e_vec_mat,
+            })
+        q,r = qr_decomposition_destructive(e_val_mat)
+        e_val_mat = r@q
+        mat_prod = e_vec_mat@q
+        dbg.print_multiline_vars({
+            'e_val_mat (after change)':e_val_mat,
+            'mat_prod':mat_prod,
+            'less than epislon cond':np.all(np.abs(np.abs(e_vec_mat)-np.abs(mat_prod))<=EPSILON)
+            })
+        if np.all(np.abs(np.abs(e_vec_mat)-np.abs(mat_prod))<=EPSILON):
+            return e_val_mat,e_vec_mat
+        e_vec_mat = mat_prod
     return e_val_mat,e_vec_mat
 
 
@@ -154,25 +168,36 @@ def normalize_rows(mat):
    mat /= row_norms(mat)[:,np.newaxis]
 
 def all_rows_nonzero(mat):
-    np.all(np.any(mat!=0,axis=-1))
+    return np.all(np.any(mat!=0,axis=-1))
 
 def norm_spectral_cluster(samples):
+    dbg = debug_utils.debug_printer(False)
     dim = len(samples)
     l = norm_graph_lap(samples)
 
     # TODO: rename e_val_mat to e_val_c_mat and e_vec_mat to e_vec_d_mat
     # (for columns and diagonal, respectively)
+
+    # TODO: check if adding a bit to the diagonal yeilds better clusters
+    PRE_QR_ITERATION_ADDEND = 0 if True else (2*EPSILON)*np.identity(len(l))
+    l+=PRE_QR_ITERATION_ADDEND
     e_val_mat,e_vec_mat = qr_iteration(l)
     e_vals = e_val_mat.diagonal()
-
+    dbg.d_assert(np.all(e_vals>=-EPSILON),
+        "Encountered negative eigenvalues, "
+        + debug_utils.vars_to_str(('e_vals',e_vals)))
+    dbg.print_vars({'e_val_mat':e_val_mat, 'e_vals':e_vals, 'e_vec_mat':e_vec_mat})
     # TODO: consider optimizing with np.argpartition(e_vals, np.arange(dim/2)) instead of full sort
     e_vals_first_half_sort_inds = np.argsort(e_vals)[:dim//2+1]
     e_vals_sorted_first_half = e_vals[e_vals_first_half_sort_inds]
     e_gaps = np.abs(np.diff(e_vals_sorted_first_half))
-    k = np.argmax(e_gaps)
+    dbg.print_vars({'e_vals_sorted_first_half':e_vals_sorted_first_half
+        ,'e_gaps':e_gaps})
+    k = np.argmax(e_gaps)+1
+    dbg.print_vars(('k',k))
     relevant_e_vec_inds = e_vals_first_half_sort_inds[:k]
     u = e_vec_mat[:,relevant_e_vec_inds]
-
+    dbg.d_assert(all_rows_nonzero(u), '\n'+debug_utils.vars_to_multiline_str(('U',u)))
     soft_assert(all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
     normalize_rows(u)
     # TODO: use kmeans on u.
