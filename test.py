@@ -11,7 +11,7 @@ from algorithms import *
 import debug_utils
 dbg = debug_utils.debug_printer(True)
 #samples = np.array([[0,1],[2,3]])
-NUM_SAMPLES = 10
+NUM_SAMPLES = 4
 samples, cluster_labels = sklearn.datasets.make_blobs(NUM_SAMPLES,2)
 dbg.print_multiline_vars({'samples':samples})
 

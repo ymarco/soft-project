@@ -92,7 +92,7 @@ def qr_decomposition_destructive(mat):
     # u = mat
     u = mat.transpose()
 
-    q = np.zeros(u.shape)
+    q = np.empty(u.shape)
     r = np.zeros(u.shape)
     dbg.print_multiline_vars({'u':u,'r':r,'q':q})
     dbg2.print_multiline_vars({'u':u,'r':r,'q':q})
@@ -137,6 +137,11 @@ def qr_decomposition_destructive(mat):
 
 
 def qr_iteration(mat):
+
+    #TODO: optimization - consider using constant buffers instead
+    # of allocating new arrays (for example make e_val_mat have a
+    # constant place in memory).
+
     dbg = debug_utils.debug_printer(False)
     dim = len(mat)
     e_val_mat = mat
@@ -176,6 +181,28 @@ def normalize_rows(mat):
 def all_rows_nonzero(mat):
     return np.all(np.any(mat!=0,axis=-1))
 
+
+# Returns the indices which yield the first k smallest elements in the
+# given array, in sorted order. (Equivalent to np.argsort(arr)[:k])
+def argsort_k_smallest(arr, k):
+    #TODO: consider using:
+    #smallest_k_partition_inds = np.argpartition(arr,k)[:k]
+    #partition_sorting_inds = np.argsort(arr[smallest_k_partition_inds])
+    #return smallest_k_partition_inds[partition_sorting_inds]
+    return np.argsort(arr)[:k]
+# If k==None, uses the eigengap heuristic
+def k_smallest_eigenvalue_inds(e_vals, k=None):
+    if k is not None:
+        return argsort_k_smallest(e_vals,k)
+    e_vals_first_half_sort_inds = argsort_k_smallest(e_vals, len(e_vals)//2+1)
+    e_vals_sorted_first_half = e_vals[e_vals_first_half_sort_inds]
+    e_gaps = np.abs(np.diff(e_vals_sorted_first_half))
+    dbg.print_vars({'e_vals_sorted_first_half':e_vals_sorted_first_half
+        ,'e_gaps':e_gaps})
+    k = np.argmax(e_gaps)+1
+    dbg.print_vars(('k',k))
+    return e_vals_first_half_sort_inds[:k]
+
 def norm_spectral_cluster(samples):
     dbg = debug_utils.debug_printer(False)
     dim = len(samples)
@@ -193,16 +220,8 @@ def norm_spectral_cluster(samples):
         "Encountered negative eigenvalues, "
         + debug_utils.vars_to_str(('e_vals',e_vals)))
     dbg.print_vars({'e_val_mat':e_val_mat, 'e_vals':e_vals, 'e_vec_mat':e_vec_mat})
-    # TODO: consider optimizing with np.argpartition(e_vals, np.arange(dim/2)) instead of full sort
-    e_vals_first_half_sort_inds = np.argsort(e_vals)[:dim//2+1]
-    e_vals_sorted_first_half = e_vals[e_vals_first_half_sort_inds]
-    e_gaps = np.abs(np.diff(e_vals_sorted_first_half))
-    dbg.print_vars({'e_vals_sorted_first_half':e_vals_sorted_first_half
-        ,'e_gaps':e_gaps})
-    k = np.argmax(e_gaps)+1
-    dbg.print_vars(('k',k))
-    relevant_e_vec_inds = e_vals_first_half_sort_inds[:k]
-    u = e_vec_mat[:,relevant_e_vec_inds]
+    inds = k_smallest_eigenvalue_inds(e_vals)
+    u = e_vec_mat[:,inds]
     dbg.d_assert(all_rows_nonzero(u), '\n'+debug_utils.vars_to_multiline_str(('U',u)))
     soft_assert(all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
     normalize_rows(u)
