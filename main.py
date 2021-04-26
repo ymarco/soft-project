@@ -7,7 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-from kmeans_pp import soft_assert
+def soft_assert(cond,msg):
+    if not cond:
+        print(msg)
+        exit()
 
 
 # TODO measure these
