@@ -3,41 +3,21 @@ import numpy as np
 from debug_utils import *
 dbg = debug_printer(True)
 
-RANDOMIZATION_SEED = 0
+import numpy_utils
 
 
-def squared_distances(a,b):
-    """
-        Returns array res of shape (len(a),len(b),)
-    for which res[i][j] is the squared distance between a[i]
-    and b[j].
-    """
-    diffs = a[:, np.newaxis] - b
-    # diffs[i][j] is samples[i]-centroids[j].
-    res = np.sum(diffs ** 2, axis=2)
-    return res
-
-
-def min_squared_distances(a, b):
+def _min_squared_distances(samples, centroids):
     """
     Returns array res of shape (len(samples),)
     for which res[i] is the minimal squared distance between sample[i] and
     the centroids.
     """
-    res = np.min(squared_distances(a, b), axis=1)
+    res = np.min(numpy_utils.squared_distances(samples, centroids), axis=-1)
     return res
 
 
-def weights_to_probs(weights):
-    """
-    Converts weights to probabilities summing to one
-    by dividing each weight by the the weights' total sum.
-    """
-    return weights / weights.sum()
-
-
 def _probs_for_next_centroid_choice(samples, centroids):
-    return weights_to_probs(min_squared_distances(samples, centroids))
+    return numpy_utils.weights_to_probs(_min_squared_distances(samples, centroids))
 
 
 def _choose_new_centroid_ind(samples, centroids):
@@ -99,7 +79,7 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=300):
     samples_cluster_inds = np.full_like(old_s_c_inds, np.nan)
     for _ in range(max_iter):
         samples_cluster_inds, old_s_c_inds = old_s_c_inds, samples_cluster_inds
-        dists = squared_distances(samples,centroids)
+        dists = numpy_utils.squared_distances(samples,centroids)
         np.argmin(dists,axis=-1,out=samples_cluster_inds)
         #dbg.print_multiline_vars({'samples_cluster_inds':samples_cluster_inds,
             # 'old_inds':old_s_c_inds})

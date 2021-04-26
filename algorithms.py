@@ -6,33 +6,18 @@ DEBUG = False
 import debug_utils
 dbg = debug_utils.debug_printer(False)
 
+import numpy_utils
+
 # TODO: use the actual soft_assert
 def soft_assert(cond,msg):
     assert cond,msg
-
-def soft_assert_nonzero_norm(cond):
-    soft_assert(cond,"Encountered norm of zero while normalizing.")
-
-def assert_sqmat(mat):
-    return mat.ndim==2 and mat.shape[0]==mat.shape[1]
-
-def diff_mat(a, b):
-    return a[:, np.newaxis] - b
-
-
-# 3.1
-#
-def euc_dist_mat(a, b):
-    return np.linalg.norm(diff_mat(a, b), axis=-1)
-
-
 #
 def weight_adj_mat(samples):
     # TODO: optimize this by avoiding calculation of symmetric elements
     # twice and avoiding calculation for points of the same index
     # (which we know are zeros on the diagonal).
 
-    dists = euc_dist_mat(samples, samples)
+    dists = numpy_utils.euc_dist_mat(samples, samples)
     res = np.exp(-dists / 2)
     np.fill_diagonal(res, 0)
 
@@ -46,9 +31,6 @@ def weight_adj_mat(samples):
 #     weight_row_sums = np.sum(weight_adj_mat(samples),axis=0)
 #     return np.diag(weight_row_sums)
 
-
-def row_sums(mat):
-    return np.sum(mat, axis=0)
 
 
 def rsqrt_diag_deg_mat(samples):
@@ -65,7 +47,7 @@ def norm_graph_lap(samples):
     # (as in step 3.2)
 
     # This is the diagonal of D as shown in step 3.1
-    rsqrt_row_sums = row_sums(weights) ** (-0.5)
+    rsqrt_row_sums = numpy_utils.row_sums(weights) ** (-0.5)
 
     # This is the calculation of D**(-0.5)@W@D (@ is matrix multplication) with D being the diagonal degree matfrom step 3.3.
     # In order to reduce space and performance costs, we can avoid calculating and storing the actual diagonal
@@ -172,30 +154,11 @@ def qr_iteration(mat):
         e_vec_mat = mat_prod
     return e_val_mat,e_vec_mat
 
-
-def row_norms(mat):
-    return np.linalg.norm(mat,axis=-1)
-
-def normalize_rows(mat):
-   mat /= row_norms(mat)[:,np.newaxis]
-
-def all_rows_nonzero(mat):
-    return np.all(np.any(mat!=0,axis=-1))
-
-
-# Returns the indices which yield the first k smallest elements in the
-# given array, in sorted order. (Equivalent to np.argsort(arr)[:k])
-def argsort_k_smallest(arr, k):
-    #TODO: consider using:
-    #smallest_k_partition_inds = np.argpartition(arr,k)[:k]
-    #partition_sorting_inds = np.argsort(arr[smallest_k_partition_inds])
-    #return smallest_k_partition_inds[partition_sorting_inds]
-    return np.argsort(arr)[:k]
 # If k==None, uses the eigengap heuristic
 def k_smallest_eigenvalue_inds(e_vals, k=None):
     if k is not None:
-        return argsort_k_smallest(e_vals,k)
-    e_vals_first_half_sort_inds = argsort_k_smallest(e_vals, len(e_vals)//2+1)
+        return numpy_utils.argsort_k_smallest(e_vals,k)
+    e_vals_first_half_sort_inds = numpy_utils.argsort_k_smallest(e_vals, len(e_vals)//2+1)
     e_vals_sorted_first_half = e_vals[e_vals_first_half_sort_inds]
     e_gaps = np.abs(np.diff(e_vals_sorted_first_half))
     dbg.print_vars({'e_vals_sorted_first_half':e_vals_sorted_first_half
@@ -223,8 +186,8 @@ def norm_spectral_cluster(samples):
     dbg.print_vars({'e_val_mat':e_val_mat, 'e_vals':e_vals, 'e_vec_mat':e_vec_mat})
     inds = k_smallest_eigenvalue_inds(e_vals)
     u = e_vec_mat[:,inds]
-    dbg.d_assert(all_rows_nonzero(u), '\n'+debug_utils.vars_to_multiline_str(('U',u)))
-    soft_assert(all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
-    normalize_rows(u)
+    dbg.d_assert(numpy_utils.all_rows_nonzero(u), '\n'+debug_utils.vars_to_multiline_str(('U',u)))
+    soft_assert(numpy_utils.all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
+    numpy_utils.normalize_rows(u)
     # TODO: use kmeans on u.
     return kmeans_numpy.k_means(u,u.shape[1],max_iter=300)
