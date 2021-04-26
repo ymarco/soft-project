@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 
 def soft_assert(cond,msg):
+    """If not cond, print msg and exit with exit code 1."""
     if not cond:
         print(msg)
         exit()
@@ -19,6 +20,7 @@ MAX_NUM_SAMPLES = 10  # 200
 
 
 def run(num_clusters, num_samples, is_random):
+    """Main function that is called from tasks.py."""
     try:
         num_clusters = int(num_clusters)
         num_samples = int(num_samples)
@@ -44,9 +46,11 @@ def run(num_clusters, num_samples, is_random):
     )
 
     def cluster_set(i, inds):
+        """Returns a set with all of sample i's neighboors in the cluster."""
         return set(j for j, sam in enumerate(samples) if sample_inds[i] == inds[j])
 
     def jaccard_measure(inds):
+        """See project specs."""
         sum_ = 0
         for i, sample in enumerate(samples):
             sum_ += (cluster_set(i, sample_inds) == cluster_set(i, inds))
