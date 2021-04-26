@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import kmeans_numpy as km_np
+import algorithms as algs
 import random
 import sklearn.datasets
 import numpy as np
@@ -38,7 +39,6 @@ def run(num_clusters, num_samples, is_random):
         n_samples=num_samples, n_features=dim, centers=num_clusters
     )
 
-    print(sample_inds)
     with open("data.txt", "w") as f:
         for i, row in enumerate(samples):
             for x in row:
@@ -47,17 +47,16 @@ def run(num_clusters, num_samples, is_random):
             f.write("%d" % sample_inds[i])
             f.write("\n")
 
-    kmeans_clusters, kmeans_inds = km_np.k_means(samples, num_clusters)
-    spectral_clusters = np.zeros([num_clusters, dim]) # TODO
+    kmeans_inds, kmeans_clusters = km_np.k_means(samples, num_clusters)
+    spectral_inds, spectral_clusters = algs.norm_spectral_cluster(samples)
 
     with open("clusters.txt", "w") as f:
         f.write("%d\n" % num_clusters)
-        for i, cluster in enumerate(kmeans_clusters):
-            f.write(",".join("%d" % j for j, x in enumerate(sample_inds) if x == i))
-            f.write("\n")
-        # for cluster in spectral_clusters:
-        #     f.write(",".join("%d" % x for x in cluster))
-        #     f.write("\n")
+        for inds in [spectral_inds, kmeans_inds]:
+            print(inds)
+            for i in range(num_clusters):
+                f.write(",".join("%d" % j for j, x in enumerate(inds) if x == i))
+                f.write("\n")
 
     # plots
     if dim == 2:
@@ -65,13 +64,13 @@ def run(num_clusters, num_samples, is_random):
     else:  # dim==3
         fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
     for (title, inds, axis) in zip(
-        ["Normalized Spectral Clustering", "K-means"], [sample_inds, kmeans_inds], axes
+        ["Normalized Spectral Clustering", "K-means"], [spectral_inds, kmeans_inds], axes
     ):
         axis.set_title(title)
         if dim == 2:
             axis.scatter(samples[:, 0], samples[:, 1], c=inds)
         else:  # dim==3
-            axis.scatter(samples[:, 0], samples[:, 1], samples[:, 2], c=sample_inds)
+            axis.scatter(samples[:, 0], samples[:, 1], samples[:, 2], c=inds)
         axis.grid(True, which="both")
         axis.set_xlabel("Jaccard measure: TODO")
     # TODO less ugly text position. y=0.1 looks better but collides with long 2D graphs.
