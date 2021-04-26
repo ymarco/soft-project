@@ -39,8 +39,14 @@ def run(num_clusters, num_samples, is_random):
         n_samples=num_samples, n_features=dim, centers=num_clusters
     )
 
+    def cluster_set(i, inds):
+        return set(j for j, sam in enumerate(samples) if sample_inds[i] == inds[j])
+
     def jaccard_measure(inds):
-        return np.sum(inds == sample_inds) / len(inds)
+        sum_ = 0
+        for i, sample in enumerate(samples):
+            sum_ += (cluster_set(i, sample_inds) == cluster_set(i, inds))
+        return sum_ / num_samples
 
     with open("data.txt", "w") as f:
         for i, row in enumerate(samples):
@@ -69,7 +75,9 @@ def run(num_clusters, num_samples, is_random):
     else:  # dim==3
         fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
     for (title, inds, axis) in zip(
-        ["Normalized Spectral Clustering", "K-means"], [spectral_inds, kmeans_inds], axes
+        ["Normalized Spectral Clustering", "K-means"],
+        [spectral_inds, kmeans_inds],
+        axes,
     ):
         axis.set_title(title)
         if dim == 2:
