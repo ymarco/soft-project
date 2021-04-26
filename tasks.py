@@ -29,7 +29,7 @@ def delete(c):
 #     delete(c)
 
 
-@task(pre=[build])
+@task
 def run(c, k=0, n=0, Random=True, no_Random=False):
     Random = not no_Random
     import main
