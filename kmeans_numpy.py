@@ -84,9 +84,9 @@ def _k_means_pp(samples, k, randomization_seed=0):
 def k_means(samples, k=None, initial_centroids = None, max_iter=300):
     num_clusters = k if k is not None else len(initial_centroids)
     num_samples = len(samples)
-    if not 1<=num_clusters<=num_samples:
+    if not 1<=num_clusters<num_samples:
         raise ValueError(f"Illegal number of clusters {num_clusters},"+\
-            f"expected number between 1,{num_samples}")
+            f"expected number between 1,{num_samples-1}")
     if initial_centroids is None and k is None:
         raise ValueError("Either k or initial_centroids must be supplied")
     elif initial_centroids is None:
@@ -98,7 +98,7 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=300):
                 f"Expected k={k} initial centroids, {len(initial_centroids)} were given instead"
                 )
         centroids = initial_centroids.copy()
-    dbg.d_assert(1<=len(centroids)<=num_samples, "")
+    dbg.d_assert(1<=len(centroids)<num_samples, "")
 
     # These variables are swapped at the beginning of the loop
     old_s_c_inds = np.empty(num_samples,dtype=np.intp)
