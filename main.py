@@ -15,8 +15,8 @@ def soft_assert(cond,msg):
 
 
 # TODO measure these
-MAX_NUM_CLUSTERS = 4  # 10
-MAX_NUM_SAMPLES = 10  # 200
+MAX_NUM_CLUSTERS = 10
+MAX_NUM_SAMPLES = 200
 
 
 def run(num_clusters, num_samples, is_random):
