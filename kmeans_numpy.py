@@ -1,29 +1,30 @@
 import numpy as np
 
 from debug_utils import *
+dbg = debug_printer(True)
 
 RANDOMIZATION_SEED = 0
 
 
-def squared_distances(samples, centroids):
+def squared_distances(a,b):
     """
-        Returns array res of shape (len(samples),len(centroids),)
-    for which res[i][j] is the squared distance between sample[i]
-    and centroid[j].
+        Returns array res of shape (len(a),len(b),)
+    for which res[i][j] is the squared distance between a[i]
+    and b[j].
     """
-    diffs = samples[:, np.newaxis] - centroids
+    diffs = a[:, np.newaxis] - b
     # diffs[i][j] is samples[i]-centroids[j].
     res = np.sum(diffs ** 2, axis=2)
     return res
 
 
-def min_squared_distances(samples, centroids):
+def min_squared_distances(a, b):
     """
     Returns array res of shape (len(samples),)
     for which res[i] is the minimal squared distance between sample[i] and
     the centroids.
     """
-    res = np.min(squared_distances(samples, centroids), axis=1)
+    res = np.min(squared_distances(a, b), axis=1)
     return res
 
 
@@ -32,60 +33,72 @@ def weights_to_probs(weights):
     Converts weights to probabilities summing to one
     by dividing each weight by the the weights' total sum.
     """
-    return weights / np.sum(weights)
+    return weights / weights.sum()
 
 
-def probs_for_next_centroid_choice(samples, centroids):
+def _probs_for_next_centroid_choice(samples, centroids):
     return weights_to_probs(min_squared_distances(samples, centroids))
 
 
-def choose_new_centroid_ind(samples, centroids):
+def _choose_new_centroid_ind(samples, centroids):
     return np.random.choice(
-        len(samples), p=probs_for_next_centroid_choice(samples, centroids)
+        len(samples), p=_probs_for_next_centroid_choice(samples, centroids)
     )
-
-
-# samples = pandas.read_csv(input_filename, header=None).to_numpy()
-
-
 
 def add_centroid_by_ind(centroid_ind):
     global centroid_inds, centroids
     centroid_inds.append(centroid_ind)
     centroids = samples[centroid_inds]
 
+
+def k_means_pp_old(samples,k,randomization_seed=0):
+    num_samples = len(samples)
+    np.random.seed(randomization_seed)
+    centroid_inds = []
+    centroids = []
+    centroid_inds.append(np.random.choice(num_samples))
+    centroids = samples[centroid_inds]
+    for _ in range(k - 1):
+        centroid_inds.append(_choose_new_centroid_ind(samples, centroids))
+        centroids = samples[centroid_inds]
+    return centroids, centroid_inds
+
 def k_means_pp(samples, k, randomization_seed=0):
-    np.random.seed(RANDOMIZATION_SEED)
-    centroid_inds = [np.random.choice(num_samples)]
-    centroids = samples[centroid_inds]
-    centroid_inds.append(centroid_ind)
-    centroids = samples[centroid_inds]
-    add_centroid_by_ind()
-    for _ in range(num_clusters - 1):
-        add_centroid_by_ind(choose_new_centroid_ind(samples, centroids))
-#dbg = debug_printer(True)
+    num_samples = len(samples)
+    np.random.seed(randomization_seed)
+    centroids_buffer = np.empty((k,samples.shape[1]))
+    centroid_inds = np.empty(k,dtype=np.intp)
+    centroid_inds[0] = first_ind = np.random.choice(num_samples)
+    centroids_buffer[0] = samples[first_ind]
+    found_centroids = centroids_buffer[:1]
+    for i in range(1, k):
+        new_ind = _choose_new_centroid_ind(samples, found_centroids)
+        centroid_inds[i] = new_ind
+        centroids_buffer[i] = samples[new_ind]
+        found_centroids = centroids_buffer[:i+1]
+    return centroids_buffer,centroid_inds
 
-def squared_distances(samples, centroids):
-    """
-        Returns array res of shape (len(samples),len(centroids),)
-    for which res[i][j] is the squared distance between sample[i]
-    and centroid[j].
-    """
-    diffs = samples[:, np.newaxis] - centroids
-    # diffs[i][j] is samples[i]-centroids[j].
-    res = np.sum(diffs ** 2, axis=2)
-    return res
-
+# Preform k_means clustering on the given samples, and the given 
+# number of clusters k. 
 
 def k_means(samples, k=None, initial_centroids = None, max_iter=1000):
+    num_clusters = k if k is not None else len(initial_centroids)
+    num_samples = len(samples)
+    if not 1<=num_clusters<=num_samples:
+        raise ValueError(f"Illegal number of clusters {num_clusters},"+\
+            f"expected number between 1,{num_samples}")
     if initial_centroids is None and k is None:
         raise ValueError("Either k or initial_centroids must be supplied")
     elif initial_centroids is None:
-        centroids = k_means_pp(samples,k)
+        centroids,_ = k_means_pp(samples,k)
+        dbg.print_multiline_vars({'received centroids from kmeans++':centroids})
     else:    
+        if k is not None and k!=len(initial_centroids):
+            raise ValueError(
+                f"Expected k={k} initial centroids, {len(initial_centroids)} were given instead"
+                )
         centroids = initial_centroids.copy()
-    num_samples = len(samples)
-    assert 1<=len(centroids)<=num_samples
+    dbg.d_assert(1<=len(centroids)<=num_samples, "")
 
     # These variables are swapped at the beginning of the loop
     old_s_c_inds = np.empty(num_samples,dtype=np.intp)
@@ -102,7 +115,6 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=1000):
         # for change in the clusters instead of in the centroids.
 
         if np.array_equal(samples_cluster_inds, old_s_c_inds): 
-            print("lol")
             break
         centroids[:] = 0
         for i,sample in enumerate(samples):
