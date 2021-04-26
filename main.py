@@ -20,7 +20,7 @@ def run(num_clusters, num_samples, is_random):
         num_clusters = int(num_clusters)
         num_samples = int(num_samples)
     except Exception:
-        soft_assert(False, "Illegal type for K,N")
+        soft_assert(False, "K,N should be integers")
 
     dim = random.randint(2, 3)
     if is_random:
@@ -47,8 +47,10 @@ def run(num_clusters, num_samples, is_random):
             f.write("%d" % sample_inds[i])
             f.write("\n")
 
+    spectral_inds, spectral_clusters = algs.norm_spectral_cluster(samples, num_clusters)
+    if num_clusters is None:
+        num_clusters = len(spectral_inds)
     kmeans_inds, kmeans_clusters = km_np.k_means(samples, num_clusters)
-    spectral_inds, spectral_clusters = algs.norm_spectral_cluster(samples)
 
     with open("clusters.txt", "w") as f:
         f.write("%d\n" % num_clusters)
