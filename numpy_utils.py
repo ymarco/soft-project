@@ -1,3 +1,7 @@
+"""
+Module for basic useful utility functions on numpy arrays
+"""
+
 import numpy as np
 
 def weights_to_probs(weights):

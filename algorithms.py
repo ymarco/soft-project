@@ -11,7 +11,7 @@ import numpy_utils
 # TODO: use the actual soft_assert
 def soft_assert(cond,msg):
     assert cond,msg
-#
+
 def weight_adj_mat(samples):
     # TODO: optimize this by avoiding calculation of symmetric elements
     # twice and avoiding calculation for points of the same index
@@ -60,8 +60,11 @@ def norm_graph_lap(samples):
     return np.identity(len(weights)) - diag_deg_and_weight_prod
 
 
-# Mutates the parameter mat!
-def qr_decomposition_destructive(mat):
+def qr_decomposition(mat):
+    """
+    Returns an orthogonal matrix q and an upper triangular matrix r
+    such that r@q==mat.
+    """
     dbg = debug_utils.debug_printer(False)
     dbg2 = debug_utils.debug_printer(False)
     if dbg2.is_active() or True:
@@ -72,8 +75,11 @@ def qr_decomposition_destructive(mat):
 
     # TODO: assert that the given argument mat is always symmetric
     # in our code, and optimize by not transposing it at all, using:
-    # u = mat
-    u = mat.transpose()
+
+    # In this implementation we transpose both u and q, this way
+    # we can manipulate their rows instead of columns (which is
+    # faster and more readable)
+    u = mat.transpose().copy()
 
     q = np.empty(u.shape)
     r = np.zeros(u.shape)
@@ -90,7 +96,9 @@ def qr_decomposition_destructive(mat):
         dbg.print_vars({'norm':norm})
 
         # Exit on r[i,i]==0 as instructed on the forum.
-        soft_assert(norm!=0, "Encountered R[i,i]=0 in qr decomposition!")
+        if norm==0:
+           raise RuntimeError("Encountered R[i,i]=0 in qr decomposition!")
+
         dbg.print_multiline_vars({'q[i]':q[i], 'u[i]':u[i], 'norm':norm})
         normalized = q[i] = u[i] / norm #if norm != 0 else np.zeros(dim)
         dbg.print_vars({'normalized':normalized})
@@ -111,6 +119,8 @@ def qr_decomposition_destructive(mat):
         dbg2.print_multiline_vars({'prods[:, np.newaxis] * q[i]':prods[:, np.newaxis] * q[i]})
         remaining_vecs -= prods[:, np.newaxis] * q[i]
 
+    # Return the transpose of q because we were looking at the transposed 
+    # version up until now.
     q=q.transpose()
     dbg2.print("calculated q & r:")
     dbg2.print_multiline_vars({'expected_q':expected_q, 'q':q,
@@ -135,7 +145,7 @@ def qr_iteration(mat):
             'e_val_mat':e_val_mat,
             'e_vec_mat':e_vec_mat,
             })
-        q,r = qr_decomposition_destructive(e_val_mat)
+        q,r = qr_decomposition(e_val_mat)
         e_val_mat = r@q
         mat_prod = e_vec_mat@q
 
@@ -167,7 +177,7 @@ def k_smallest_eigenvalue_inds(e_vals, k=None):
     dbg.print_vars(('k',k))
     return e_vals_first_half_sort_inds[:k]
 
-def norm_spectral_cluster(samples):
+def norm_spectral_cluster(samples, k=None):
     dbg = debug_utils.debug_printer(False)
     dim = len(samples)
     l = norm_graph_lap(samples)
@@ -184,10 +194,10 @@ def norm_spectral_cluster(samples):
         "Encountered negative eigenvalues, "
         + debug_utils.vars_to_str(('e_vals',e_vals)))
     dbg.print_vars({'e_val_mat':e_val_mat, 'e_vals':e_vals, 'e_vec_mat':e_vec_mat})
-    inds = k_smallest_eigenvalue_inds(e_vals)
+    inds = k_smallest_eigenvalue_inds(e_vals,k)
     u = e_vec_mat[:,inds]
-    dbg.d_assert(numpy_utils.all_rows_nonzero(u), '\n'+debug_utils.vars_to_multiline_str(('U',u)))
-    soft_assert(numpy_utils.all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
+    if not numpy_utils.all_rows_nonzero(u):
+        raise RuntimeError("U in the spectral clustering algorithm has a zero row, can not be normalized.")
     numpy_utils.normalize_rows(u)
     # TODO: use kmeans on u.
     return kmeans_numpy.k_means(u,u.shape[1],max_iter=300)
