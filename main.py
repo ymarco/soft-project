@@ -65,7 +65,7 @@ def run(num_clusters, num_samples, is_random):
 
     # plots
     if dim == 2:
-        fig, axes = plt.subplots(1, 2)
+        fig, axes = plt.subplots(1, 2, subplot_kw={"aspect": "equal"})
     else:  # dim==3
         fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
     for (title, inds, axis) in zip(
