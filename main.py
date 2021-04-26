@@ -60,12 +60,23 @@ def run(num_clusters, num_samples, is_random):
         #     f.write(",".join("%d" % x for x in cluster))
         #     f.write("\n")
 
-    if dim==2:
-        plt.scatter(samples[:,0], samples[:,1], c=sample_inds)
-    else: # dim==3
-        ax = plt.figure().add_subplot(projection="3d")
-        ax.scatter(samples[:,0], samples[:,1], samples[:,2], c=sample_inds)
-    plt.grid(True, which='both')
+    # plots
+    if dim == 2:
+        fig, axes = plt.subplots(1, 2)
+    else:  # dim==3
+        fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
+    for (title, inds, axis) in zip(
+        ["Normalized Spectral Clustering", "K-means"], [sample_inds, sample_inds], axes
+    ):
+        axis.set_title(title)
+        if dim == 2:
+            axis.scatter(samples[:, 0], samples[:, 1], c=inds)
+        else:  # dim==3
+            axis.scatter(samples[:, 0], samples[:, 1], samples[:, 2], c=sample_inds)
+        axis.grid(True, which="both")
+        axis.set_xlabel("Jaccard measure: TODO")
+    # TODO less ugly text position. y=0.1 looks better but collides with long 2D graphs.
+    fig.text(0.1, 0.0, f"Used constants: n = {num_samples}, k = {num_clusters}")
     plt.savefig("clusters.pdf")
 
     print(f"{num_clusters} clusters with {num_samples} samples, random is {is_random}")
