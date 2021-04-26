@@ -65,7 +65,7 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=300):
         raise ValueError("Either k or initial_centroids must be supplied")
     elif initial_centroids is None:
         centroids,_ = _k_means_pp(samples,k)
-        dbg.print_multiline_vars({'received centroids from kmeans++':centroids})
+        # dbg.print_multiline_vars({'received centroids from kmeans++':centroids})
     else:    
         if k is not None and k!=len(initial_centroids):
             raise ValueError(

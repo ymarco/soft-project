@@ -65,7 +65,7 @@ def run(num_clusters, num_samples, is_random):
     with open("clusters.txt", "w") as f:
         f.write("%d\n" % num_clusters)
         for inds in [spectral_inds, kmeans_inds]:
-            print(inds)
+            # print(inds)
             for i in range(num_clusters):
                 f.write(",".join("%d" % j for j, x in enumerate(inds) if x == i))
                 f.write("\n")
