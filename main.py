@@ -39,6 +39,9 @@ def run(num_clusters, num_samples, is_random):
         n_samples=num_samples, n_features=dim, centers=num_clusters
     )
 
+    def jaccard_measure(inds):
+        return np.sum(inds == sample_inds) / len(inds)
+
     with open("data.txt", "w") as f:
         for i, row in enumerate(samples):
             for x in row:
@@ -74,7 +77,7 @@ def run(num_clusters, num_samples, is_random):
         else:  # dim==3
             axis.scatter(samples[:, 0], samples[:, 1], samples[:, 2], c=inds)
         axis.grid(True, which="both")
-        axis.set_xlabel("Jaccard measure: TODO")
+        axis.set_xlabel(f"Jaccard measure: {jaccard_measure(inds)}")
     # TODO less ugly text position. y=0.1 looks better but collides with long 2D graphs.
     fig.text(0.1, 0.0, f"Used constants: n = {num_samples}, k = {num_clusters}")
     plt.savefig("clusters.pdf")
