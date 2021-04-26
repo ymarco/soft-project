@@ -45,12 +45,6 @@ def _choose_new_centroid_ind(samples, centroids):
         len(samples), p=_probs_for_next_centroid_choice(samples, centroids)
     )
 
-def add_centroid_by_ind(centroid_ind):
-    global centroid_inds, centroids
-    centroid_inds.append(centroid_ind)
-    centroids = samples[centroid_inds]
-
-
 def _k_means_pp_old(samples,k,randomization_seed=0):
     num_samples = len(samples)
     np.random.seed(randomization_seed)
