@@ -199,5 +199,4 @@ def norm_spectral_cluster(samples, k=None):
     if not numpy_utils.all_rows_nonzero(u):
         raise RuntimeError("U in the spectral clustering algorithm has a zero row, can not be normalized.")
     numpy_utils.normalize_rows(u)
-    # TODO: use kmeans on u.
     return kmeans_numpy.k_means(u,u.shape[1],max_iter=300)
