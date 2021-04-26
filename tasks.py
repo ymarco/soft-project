@@ -30,8 +30,7 @@ def delete(c):
 
 
 @task
-def run(c, k=0, n=0, Random=True, no_Random=False):
-    Random = not no_Random
+def run(c, k=0, n=0, Random=True):
     import main
 
     main.run(k, n, Random)
