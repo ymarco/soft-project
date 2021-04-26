@@ -1,1 +1,4 @@
 TODO: seperate stuff from algorithms.py into different files
+
+
+TODO: delete all debugging code, remove all TODOs.
