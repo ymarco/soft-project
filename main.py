@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-import kmeans_numpy as km_np
-import algorithms as algs
 import random
 import sklearn.datasets
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-def soft_assert(cond,msg):
-    """If not cond, print msg and exit with exit code 1."""
-    if not cond:
-        print(msg)
-        exit()
-
+from basic_utils import err_exit_with, arg_to_int, soft_assert
+import kmeans_numpy as km_np
+import algorithms as algs
 
 # TODO measure these
 MAX_NUM_CLUSTERS = 10
 MAX_NUM_SAMPLES = 200
 
 
+
 def run(num_clusters, num_samples, is_random):
+    print(num_clusters,num_samples)
     """Main function that is called from tasks.py."""
     try:
         num_clusters = int(num_clusters)
@@ -29,8 +24,8 @@ def run(num_clusters, num_samples, is_random):
 
     dim = random.randint(2, 3)
     if is_random:
-        num_clusters = random.randint(MAX_NUM_CLUSTERS // 2, MAX_NUM_CLUSTERS)
         num_samples = random.randint(MAX_NUM_SAMPLES // 2, MAX_NUM_SAMPLES)
+        num_clusters = random.randint(MAX_NUM_CLUSTERS // 2, num_samples)
 
     soft_assert(num_clusters > 0, "K must be a positive integer (bigger than 0)")
     soft_assert(num_samples > 0, "n must be a positive integer (bigger than 0)")
