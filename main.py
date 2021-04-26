@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import kmeans_pp
+import kmeans_numpy as km_np
 import random
 import sklearn.datasets
 import numpy as np
@@ -47,9 +47,8 @@ def run(num_clusters, num_samples, is_random):
             f.write("%d" % sample_inds[i])
             f.write("\n")
 
-    # should be indecies
-    kmeans_clusters = np.zeros([num_clusters, dim])
-    spectral_clusters = np.zeros([num_clusters, dim])
+    kmeans_clusters, kmeans_inds = km_np.k_means(samples, num_clusters)
+    spectral_clusters = np.zeros([num_clusters, dim]) # TODO
 
     with open("clusters.txt", "w") as f:
         f.write("%d\n" % num_clusters)
@@ -66,7 +65,7 @@ def run(num_clusters, num_samples, is_random):
     else:  # dim==3
         fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
     for (title, inds, axis) in zip(
-        ["Normalized Spectral Clustering", "K-means"], [sample_inds, sample_inds], axes
+        ["Normalized Spectral Clustering", "K-means"], [sample_inds, kmeans_inds], axes
     ):
         axis.set_title(title)
         if dim == 2:
