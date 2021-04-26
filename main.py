@@ -3,14 +3,15 @@ import kmeans_pp
 import random
 import sklearn.datasets
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 from kmeans_pp import soft_assert
 
 
 # TODO measure these
-MAX_NUM_CLUSTERS = 4
-MAX_NUM_SAMPLES = 10
+MAX_NUM_CLUSTERS = 4  # 10
+MAX_NUM_SAMPLES = 10  # 200
 
 
 def run(num_clusters, num_samples, is_random):
@@ -39,7 +40,7 @@ def run(num_clusters, num_samples, is_random):
 
     print(sample_inds)
     with open("data.txt", "w") as f:
-        for i,row in enumerate(samples):
+        for i, row in enumerate(samples):
             for x in row:
                 f.write("%.8f" % x)
                 f.write(",")
@@ -52,11 +53,19 @@ def run(num_clusters, num_samples, is_random):
 
     with open("clusters.txt", "w") as f:
         f.write("%d\n" % num_clusters)
-        for row in kmeans_clusters:
-            f.write(",".join("%d" % x for x in row))
+        for i, cluster in enumerate(kmeans_clusters):
+            f.write(",".join("%d" % j for j, x in enumerate(sample_inds) if x == i))
             f.write("\n")
-        for row in spectral_clusters:
-            f.write(",".join("%d" % x for x in row))
-            f.write("\n")
+        # for cluster in spectral_clusters:
+        #     f.write(",".join("%d" % x for x in cluster))
+        #     f.write("\n")
+
+    if dim==2:
+        plt.scatter(samples[:,0], samples[:,1], c=sample_inds)
+    else: # dim==3
+        ax = plt.figure().add_subplot(projection="3d")
+        ax.scatter(samples[:,0], samples[:,1], samples[:,2], c=sample_inds)
+    plt.grid(True, which='both')
+    plt.savefig("clusters.pdf")
 
     print(f"{num_clusters} clusters with {num_samples} samples, random is {is_random}")
