@@ -1,4 +1,5 @@
 import numpy as np
+import kmeans_numpy
 EPSILON = 0.0001
 DEBUG = False
 
@@ -226,4 +227,4 @@ def norm_spectral_cluster(samples):
     soft_assert(all_rows_nonzero(u), "U in the spectral clustering algorithm has a zero row, can not be normalized.")
     normalize_rows(u)
     # TODO: use kmeans on u.
-    return u
+    return kmeans_numpy.k_means(u,initial_centroids=u[:u.shape[1]])
