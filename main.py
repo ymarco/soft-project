@@ -34,6 +34,7 @@ def run(num_clusters, num_samples, is_random):
     # soft_assert(max_iter >= 0, "MAX_ITER must be a non-negative integer.")
 
     print(f"Maximum capacity: K={MAX_NUM_CLUSTERS}, N={MAX_NUM_SAMPLES}")
+    print(f"Running with k={num_clusters}, n={num_samples}")
 
     samples, sample_inds = sklearn.datasets.make_blobs(
         n_samples=num_samples, n_features=dim, centers=num_clusters
@@ -89,5 +90,3 @@ def run(num_clusters, num_samples, is_random):
     # TODO less ugly text position. y=0.1 looks better but collides with long 2D graphs.
     fig.text(0.1, 0.0, f"Used constants: n = {num_samples}, k = {num_clusters}")
     plt.savefig("clusters.pdf")
-
-    print(f"{num_clusters} clusters with {num_samples} samples, random is {is_random}")
