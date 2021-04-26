@@ -20,3 +20,10 @@ dbg.print_multiline_vars({'samples':samples})
 
 u = norm_spectral_cluster(samples)
 dbg.print_multiline_vars({'u':u})
+
+from kmeans_numpy import *
+samples = np.array([[0.,1.,2.],[1.,15.,12.],[2.,18.,17.],[-2.,3.,4.],[-5.,6.,10.]])
+k = 3
+res = k_means(samples,initial_centroids=samples[:k],max_iter=1000)
+inds, centroids = res
+print(f"inds = {inds}\n\ncentroids:\n{centroids}")
