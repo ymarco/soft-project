@@ -51,7 +51,7 @@ def add_centroid_by_ind(centroid_ind):
     centroids = samples[centroid_inds]
 
 
-def k_means_pp_old(samples,k,randomization_seed=0):
+def _k_means_pp_old(samples,k,randomization_seed=0):
     num_samples = len(samples)
     np.random.seed(randomization_seed)
     centroid_inds = []
@@ -63,7 +63,7 @@ def k_means_pp_old(samples,k,randomization_seed=0):
         centroids = samples[centroid_inds]
     return centroids, centroid_inds
 
-def k_means_pp(samples, k, randomization_seed=0):
+def _k_means_pp(samples, k, randomization_seed=0):
     num_samples = len(samples)
     np.random.seed(randomization_seed)
     centroids_buffer = np.empty((k,samples.shape[1]))
@@ -81,7 +81,7 @@ def k_means_pp(samples, k, randomization_seed=0):
 # Preform k_means clustering on the given samples, and the given 
 # number of clusters k. 
 
-def k_means(samples, k=None, initial_centroids = None, max_iter=1000):
+def k_means(samples, k=None, initial_centroids = None, max_iter=300):
     num_clusters = k if k is not None else len(initial_centroids)
     num_samples = len(samples)
     if not 1<=num_clusters<=num_samples:
@@ -90,7 +90,7 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=1000):
     if initial_centroids is None and k is None:
         raise ValueError("Either k or initial_centroids must be supplied")
     elif initial_centroids is None:
-        centroids,_ = k_means_pp(samples,k)
+        centroids,_ = _k_means_pp(samples,k)
         dbg.print_multiline_vars({'received centroids from kmeans++':centroids})
     else:    
         if k is not None and k!=len(initial_centroids):
