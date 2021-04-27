@@ -4,10 +4,8 @@
 Module for general matrix related algorithms, containing qr_decomposition
 and qr_iteration algorithms.
 """
-import numpy as np
 
-import debug_utils
-dbg = debug_utils.debug_printer(False)
+import numpy as np
 
 EPSILON = 0.0001
 def qr_decomposition(mat, out = (None, None) ,destructive=False, assume_out_r_is_up_tri=False):
@@ -43,66 +41,44 @@ def qr_decomposition(mat, out = (None, None) ,destructive=False, assume_out_r_is
     assert out_q.shape == out_r.shape == mat.shape
     if not assume_out_r_is_up_tri:
         out_r.fill(0)
-
-    # TODO: assert that the given argument mat is always symmetric
-    # in our code, and optimize by not transposing it at all, using:
-
-
     # For syntactic perference, we transpose u and q and use their
     # rows instead of columns (for readability/writeability).
     q = out_q.T
     r = out_r
     u = mat.T if destructive else mat.T.copy()
 
-    dbg = debug_utils.debug_printer(False)
-    dbg2 = debug_utils.debug_printer(False)
-    if dbg2.is_active() or True:
-        mat_copy = mat.copy()
     dim = len(mat)
-    if dbg2.is_active() or True:
-        expected_q,expected_r = np.linalg.qr(mat)
 
-
-    dbg.print_multiline_vars({'u':u,'r':r,'q':q})
-    dbg2.print_multiline_vars({'u':u,'r':r,'q':q})
     for i in range(dim):
         norm = np.linalg.norm(u[i])
         r[i,i] = norm
 
-        DEBUG_LAST_QR_DECOMP_ITER = False
-        if i==dim-1 and DEBUG_LAST_QR_DECOMP_ITER:
-            dbg.set_active(True)
-        dbg.print_vars({'i':i})
-        dbg.print_vars({'norm':norm})
 
-        # Exit on r[i,i]==0 as instructed on the forum.
+
+        # As instructed on the forum, we exit on R[i,i]=0
         if norm==0:
-           raise RuntimeError("Encountered R[i,i]=0 in qr decomposition.")
+           raise ZeroDivisionError(
+               "Encountered R[i,i]=0 in qr decomposition.")
 
-        dbg.print_multiline_vars({'q[i]':q[i], 'u[i]':u[i], 'norm':norm})
-        normalized = q[i] = u[i] / norm #if norm != 0 else np.zeros(dim)
-        dbg.print_vars({'normalized':normalized})
-        dbg.print_multiline_vars({'u':u,'r':r,'q':q})
+        normalized = q[i] = u[i] / norm
 
-        # for j in range(i+1,len(u)):
+        ## Alternative option - when r[i][i]==0 assign q[i]=0.
+        #if norm==0:
+            #normalized = q[i] = 0
+        #else:
+            #normalized = q[i] = u[i] / norm
 
-        #     prod = np.inner(q[i],u[j])
-        #     r[i,j] = prod
-        #     u[j] -= prod*q[i]
+
+        # The following code is equivalent to:
+            # for j in range(i+1,len(u)):
+            #     prod = np.inner(q[i],u[j])
+            #     r[i,j] = prod
+            #     u[j] -= prod*q[i]
 
         remaining_vecs = u[i+1 :]
-        if dbg.is_active():
-            prods_calc = np.inner(normalized, remaining_vecs)
-            dbg.print_multiline_vars({'prods-calc':prods_calc})
         prods = r[i,i + 1 :] = np.inner(normalized, remaining_vecs)
-        dbg.print_multiline_vars({'prods':prods, 'r':r})
-        dbg2.print_multiline_vars({'prods[:, np.newaxis] * q[i]':prods[:, np.newaxis] * q[i]})
         remaining_vecs -= prods[:, np.newaxis] * q[i]
 
-    dbg2.print("calculated q & r:")
-    dbg2.print_multiline_vars({'expected_q':expected_q, 'q':out_q,
-     'q.T@q':q@out_q, 'q@r':out_q@r, 'original mat':mat_copy, 'r':r,
-      'expected_r':expected_r, 'expected_q,q diff':np.abs(expected_q)-np.abs(out_q)})
     return out_q, out_r
 
 
@@ -114,26 +90,33 @@ def qr_iteration(mat, destructive=False, epsilon = EPSILON):
 
     The parameter destructive, when true, allows the algorithm to
     manipulate the input array instead of copying it for its purposes.
+
+    For performance reasons, whenever using destructive=True, it is
+    recommended to supply a column-major (fortran-style) array when
+    supplying the input matrix mat. (Because mat is used in qr_iteration,
+    see the documentation there). This performance gain is backed up
+    by measurements.
     """
 
-    #TODO: optimization - consider using constant buffers instead
-    # of allocating new arrays (for example make e_val_mat have a
-    # constant place in memory).
-
-    dbg = debug_utils.debug_printer(False)
-
     dim = len(mat)
-    e_val_mat = mat if destructive else mat.copy()
+
+    # Use column-major copy for better cache locality, see documentation
+    # above and in qr_decomposition.
+    e_val_mat = mat if destructive else mat.copy(order='F')
+
     e_vec_mat = np.identity(dim)
-    q = np.empty(mat.shape)
+
+    # Again, column-major for cache locality (see qr_decompisition doc).
+    # Another possible reason for why this yields better performence
+    # (according to benchmarks) except for the one documented in
+    # qr_decompisition is that in the matrix multiplication performed
+    # in this algorithm q the right multiplicand (sums are across its'
+    # columns).
+    q = np.empty(mat.shape, order='F')
+
     r = np.zeros_like(q)
     temp_mat_prod_b = np.empty(mat.shape)
     for i in range(dim):
-        dbg.print_multiline_vars({
-            'qr_iteration iteration number':i,
-            'e_val_mat':e_val_mat,
-            'e_vec_mat':e_vec_mat,
-            })
         qr_decomposition(
             e_val_mat,
             out = (q,r),
@@ -147,15 +130,10 @@ def qr_iteration(mat, destructive=False, epsilon = EPSILON):
 
         # Checking if we're close enough to convergence.
         # The parameter rtol is for relative tolerance, setting that to zero
-        # makes the comparison non relative. atol=epsilon is our absoloute tolerance as wanted.
+        # makes the comparison non relative. atol=epsilon is our absolute tolerance as wanted.
         is_close_to_convergence = np.allclose(
             abs(e_vec_mat), abs(temp_mat_prod_b),
             atol=epsilon, rtol=0)
-        dbg.print_multiline_vars({
-            'e_val_mat (after change)':e_val_mat,
-            'temp_mat_prod_b':temp_mat_prod_b,
-            'less than epislon cond':is_close_to_convergence
-            })
 
         if is_close_to_convergence:
             return e_val_mat,e_vec_mat

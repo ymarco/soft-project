@@ -13,8 +13,8 @@ from basic_utils import err_exit_with, arg_to_int, soft_assert
 from clustering_algs import norm_spectral_clustering, k_means
 
 # TODO measure these
-MAX_NUM_CLUSTERS = 10
-MAX_NUM_SAMPLES = 200
+MAX_NUM_CLUSTERS = 30
+MAX_NUM_SAMPLES = 300
 
 def same_cluster_bool_arr(inds):
     """
@@ -62,7 +62,6 @@ def save_gen_data(out_file_name, samples,cluster_inds):
         for i, row in enumerate(samples):
             for x in row:
                 f.write(f"{x:.8f},")
-                f.write(",")
             f.write(f"{cluster_inds[i]}\n")
 
 
@@ -135,7 +134,7 @@ def create_plots(
         axis.grid(True, which="both")
         jacc_measure = jaccard_measure(inds, gen_inds)
         axis.set_xlabel(f"Jaccard measure: {jacc_measure:.4f}")
-    # TODO less ugly text position. y=0.1 looks better but collides with long 2D graphs.
+
     fig.text(0.033, 0.05,
              f"Used n = {num_samples}, k = {num_gen_clusters} for data "
              f"generation, searched for k = {num_search_clusters} "

@@ -1,7 +1,4 @@
 import numpy as np
-import debug_utils
-dbg = debug_utils.debug_printer(False)
-
 import numpy_utils as np_utils
 import mat_algs
 
@@ -55,10 +52,16 @@ def _k_means_pp(samples, k, randomization_seed=0):
         found_centroids = centroids_buffer[:i+1]
     return centroids_buffer,centroid_inds
 
-# Preform k_means clustering on the given samples, and the given 
-# number of clusters k. 
-
 def k_means(samples, k=None, initial_centroids = None, max_iter=300):
+    """
+    Preform k_means clustering on the given samples, and the given
+    number of clusters k.
+
+    Returns an array mapping each sample index to the cluster index
+    it was assigned to, and the centroid vectors corresponding to the
+    cluster indices.
+    """
+
     num_clusters = k if k is not None else len(initial_centroids)
     num_samples = len(samples)
     if not 1<=num_clusters<num_samples:
@@ -68,14 +71,12 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=300):
         raise ValueError("Either k or initial_centroids must be supplied")
     elif initial_centroids is None:
         centroids,_ = _k_means_pp(samples,k)
-        # dbg.print_multiline_vars({'received centroids from kmeans++':centroids})
-    else:    
+    else:
         if k is not None and k!=len(initial_centroids):
             raise ValueError(
                 f"Expected k={k} initial centroids, {len(initial_centroids)} were given instead"
                 )
         centroids = initial_centroids.copy()
-    dbg.d_assert(1<=len(centroids)<num_samples, "")
 
     # These variables are swapped at the beginning of the loop
     old_s_c_inds = np.empty(num_samples,dtype=np.intp)
@@ -84,29 +85,19 @@ def k_means(samples, k=None, initial_centroids = None, max_iter=300):
         samples_cluster_inds, old_s_c_inds = old_s_c_inds, samples_cluster_inds
         dists = np_utils.squared_distances(samples,centroids)
         np.argmin(dists,axis=-1,out=samples_cluster_inds)
-        #dbg.print_multiline_vars({'samples_cluster_inds':samples_cluster_inds,
-            # 'old_inds':old_s_c_inds})
-        # There is a one-to-one correspondence between the clusters and the centroids
-        # (the clusters are a function of the centroids and the constant samples, and
-        # the centroids are a function of the clusters). Thus we can check
-        # for change in the clusters instead of in the centroids.
 
-        if np.array_equal(samples_cluster_inds, old_s_c_inds): 
+        # There is a one-to-one correspondence between the clusters
+        # and the centroids (the clusters are a function of the centroids
+        # and the constant samples, and the centroids are a function of
+        # the clusters). Thus we can check for change in the clusters
+        # indices instead of in the centroids.
+        if np.array_equal(samples_cluster_inds, old_s_c_inds):
             break
         centroids[:] = 0
         for i,sample in enumerate(samples):
-            #dbg.print_vars({'i':i})
-            #dbg.print_multiline_vars({'centroids':centroids,f'samples[i={i}]':samples[i],
-                # 'sample':sample, 'inds[i]':samples_cluster_inds[i]})
             centroids[samples_cluster_inds[i]] += samples[i]
         cluster_sizes = np.bincount(samples_cluster_inds)
-        #dbg.print_multiline_vars({'cluster_sizes':cluster_sizes,'centroids':centroids})
-        # assert len(cluster_sizes)==len(centroids) and np.all(cluster_sizes)>=1, \
-        #  f"{cluster_sizes}\n{centroids}"
         centroids /= cluster_sizes[:, np.newaxis]
-        #dbg.print_vars({"samples[1]":samples[1]})
-
-        #dprint(f"centroids = {centroids}")
     return samples_cluster_inds, centroids
 
 
@@ -118,10 +109,6 @@ def _weight_adj_mat(samples):
         exp(-l2_norm(samples[i]-samples[j])/2)
     """
 
-    # TODO: optimize this by avoiding calculation of symmetric elements
-    # twice and avoiding calculation for points of the same index
-    # (which we know are zeros on the diagonal).
-
     dists = np_utils.euc_dist_mat(samples, samples)
     res = np.exp(-dists / 2)
     np.fill_diagonal(res, 0)
@@ -130,6 +117,10 @@ def _weight_adj_mat(samples):
 
 # 3.2, 3.3
 def _norm_graph_lap(samples):
+    """
+    Returns the normalized graph laplacian matrix corresponding to
+    the given samples.
+    """
     weights = _weight_adj_mat(samples)
 
     # In these comments we will denote weighted adjacency matrix as W
@@ -140,8 +131,8 @@ def _norm_graph_lap(samples):
     # This is the diagonal of D as shown in step 3.1
     rsqrt_row_sums = np_utils.row_sums(weights) ** (-0.5)
 
-    # This is the calculation of D**(-0.5)@W@D**(-0.5) with D being the diagonal
-    # degree matrix from step 3.3.
+    # This is the calculation of D**(-0.5)@W@D**(-0.5) with D
+    # being the diagonal degree matrix from step 3.3.
     # In order to reduce space and performance costs, we can avoid
     # calculating and storing the actual diagonal matrix D with useless
     # zeroes. We do that by multiplying the columns of W by D's diagonal
@@ -152,27 +143,37 @@ def _norm_graph_lap(samples):
     weights *= rsqrt_row_sums[:, np.newaxis]
 
     prod = weights
-    # We've calculated D**(-0.5)@W@D**(-0.5), all that's left
-    # is to subtract 1 from the diagonal and negate the array
+    # We've calculated D**(-0.5)@W@D**(-0.5), all that's left is to
+    # subtract 1 from the diagonal and negate the array
     np.fill_diagonal(prod,(np.diag(weights)-1))
     return -prod
 
 
-# If k==None, uses the eigengap heuristic
 def _k_smallest_eigenvalue_inds(e_vals, k=None):
+    """
+    Returns k indices which yield the first k smallest values
+    (in our case eigenvalues) from the input e_vals in sorted order,
+    finding k using the eigengap heuristic if given k=None.
+    """
+
     if k is not None:
         return np_utils.argsort_k_smallest(e_vals,k)
-    e_vals_first_half_sort_inds = np_utils.argsort_k_smallest(e_vals, len(e_vals)//2+1)
+    e_vals_first_half_sort_inds = np_utils.argsort_k_smallest(
+        e_vals, len(e_vals)//2+1)
     e_vals_sorted_first_half = e_vals[e_vals_first_half_sort_inds]
     e_gaps = np.abs(np.diff(e_vals_sorted_first_half))
-    dbg.print_vars({'e_vals_sorted_first_half':e_vals_sorted_first_half
-        ,'e_gaps':e_gaps})
     k = np.argmax(e_gaps)+1
-    dbg.print_vars(('k',k))
     return e_vals_first_half_sort_inds[:k]
 
 def norm_spectral_clustering(samples, k=None):
-    dbg = debug_utils.debug_printer(False)
+    """
+    The normalized spectral clustering algorithm.
+
+    Returns an array mapping each sample index to the cluster index
+    it was assigned to, and the centroid vectors corresponding to the
+    cluster indices.
+    """
+
     dim = len(samples)
     l = _norm_graph_lap(samples)
 
@@ -182,15 +183,21 @@ def norm_spectral_clustering(samples, k=None):
     # TODO: check if adding a bit to the diagonal yeilds better clusters
     PRE_QR_ITERATION_ADDEND = 0 if True else (2*EPSILON)*np.identity(len(l))
     l+=PRE_QR_ITERATION_ADDEND
+
+    # Using destructive=True seems to not improve or only negligibly
+    # improve performance.
+    #e_val_mat,e_vec_mat = mat_algs.qr_iteration(
+    #    l.T,destructive=True, epsilon=EPSILON)
     e_val_mat,e_vec_mat = mat_algs.qr_iteration(l,epsilon=EPSILON)
+
     e_vals = e_val_mat.diagonal()
-    dbg.d_assert(np.all(e_vals>=-EPSILON),
-        "Encountered negative eigenvalues, "
-        + debug_utils.vars_to_str(('e_vals',e_vals)))
-    dbg.print_vars({'e_val_mat':e_val_mat, 'e_vals':e_vals, 'e_vec_mat':e_vec_mat})
     inds = _k_smallest_eigenvalue_inds(e_vals,k)
     u = e_vec_mat[:,inds]
+
+    # Exit if u has a zero row, as instructed on the forum:
     if not np_utils.all_rows_nonzero(u):
-        raise RuntimeError("U in the spectral clustering algorithm has a zero row, can not be normalized.")
+        raise ZeroDivisionError(
+            "U in the spectral clustering algorithm"\
+            "has a zero row, can not be normalized.")
     np_utils.normalize_rows(u)
     return k_means(u,u.shape[1],max_iter=300)
