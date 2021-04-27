@@ -1,5 +1,5 @@
 """
-Module for general useful utility functions on numpy arrays
+Module for general utility functions on numpy arrays.
 """
 
 import numpy as np
@@ -58,8 +58,6 @@ def normalize_rows(mat):
 
 def all_rows_nonzero(mat):
     return np.all(np.any(mat!=0,axis=-1))
-
-
 
 def argsort_k_smallest(arr, k):
     """

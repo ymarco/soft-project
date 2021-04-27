@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+"""
+Module for basic general python utilities.
+"""
+
+#/usr/bin/env python3
 from sys import stderr
 
 def err_exit_with(msg):

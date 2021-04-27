@@ -1,3 +1,16 @@
+"""
+Module for clustering algorithms.
+
+Includes the spectral clustering algorithm and k-means, including
+various helper methods for them (beginning with _).
+
+We chose to code everything in numpy because of  its' performance
+benefits, readability and rich capabilities.
+The C implementation from of k-means from the first assignment was
+also re-written in numpy here (very similiar implementation).
+"""
+
+
 import numpy as np
 import numpy_utils as np_utils
 import mat_algs
