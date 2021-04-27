@@ -38,6 +38,12 @@ def _k_means_pp_old(samples,k,randomization_seed=0):
 
 
 def _k_means_pp(samples, k, randomization_seed=0):
+    """
+    Find k initial centroids using the k-means++ algorithm.
+    Returns an array of the centroids, and an array containing
+    the indices of samples which were chosen as the centroids
+    (an arr such that samples[arr[i]] is equal to centroids[i]).
+    """
     num_samples = len(samples)
     np.random.seed(randomization_seed)
     centroids_buffer = np.empty((k,samples.shape[1]))
