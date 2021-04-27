@@ -149,8 +149,8 @@ def run(k, n, is_random):
 
     print(f"Maximum capacity: k={MAX_NUM_CLUSTERS}, n={MAX_NUM_SAMPLES}")
     print(
-        f"Running with n={num_samples}, K={num_gen_clusters} for "\
-        f"generation and k={num_search_clusters} for the clustering "
+        f"Running with n={num_samples}, dim={dim}. K={num_gen_clusters}"
+        f"for generation and k={num_search_clusters} for the clustering "
         f"algorithms.")
 
     samples, gen_inds = sklearn.datasets.make_blobs(
