@@ -12,6 +12,6 @@ def soft_assert(cond,msg):
 
 def arg_to_int(arg_name, arg_str):
     try:
-        return int(num_clusters)
+        return int(arg_str)
     except ValueError:
         err_exit_with(f"{arg_name} can not be converted to int")

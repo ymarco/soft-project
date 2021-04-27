@@ -1,56 +1,15 @@
+#!/usr/bin/env python3
+
+"""
+Module for general matrix related algorithms, containing qr_decomposition
+and qr_iteration algorithms.
+"""
 import numpy as np
-import kmeans_numpy
-EPSILON = 0.0001
 
 import debug_utils
 dbg = debug_utils.debug_printer(False)
 
-import numpy_utils
-
-def weight_adj_mat(samples):
-    """
-    Calculate the weight adjacency matrix.
-    The resulting matrix ret is a symmetric matrix with diagonal of 0,
-    (ret[i][i]=0) and for i!=j, ret[i][j] is equal to:
-        exp(-l2_norm(samples[i]-samples[j])/2)
-    """
-
-    # TODO: optimize this by avoiding calculation of symmetric elements
-    # twice and avoiding calculation for points of the same index
-    # (which we know are zeros on the diagonal).
-
-    dists = numpy_utils.euc_dist_mat(samples, samples)
-    res = np.exp(-dists / 2)
-    np.fill_diagonal(res, 0)
-
-    return res
-
-# 3.2, 3.3
-def norm_graph_lap(samples):
-    weights = weight_adj_mat(samples)
-
-    # In these comments we will denote weighted adjacency matrix as W
-    # (as in step 3.1 in the algorithm) and the
-    # the diagonal degree matrix as D
-    # (as in step 3.2)
-
-    # This is the diagonal of D as shown in step 3.1
-    rsqrt_row_sums = numpy_utils.row_sums(weights) ** (-0.5)
-
-    # This is the calculation of D**(-0.5)@W@D with D being the diagonal
-    # degree matrix from step 3.3.
-    # In order to reduce space and performance costs, we can avoid
-    # calculating and storing the actual diagonal matrix D with useless
-    # zeroes. We do that by multiplying the columns of W by D's diagonal
-    # and then multiplying the result's rows by the diagonal. Since D is
-    # a diagonal matrix this is exactly the same as performing the matrix
-    # multiplication.
-    diag_deg_and_weight_prod = (weights * rsqrt_row_sums) * rsqrt_row_sums[:, np.newaxis]
-
-    # TODO: consider optimizing by swapping identity matrix calculation with fill_diagonal(1-diagonal)
-    return np.identity(len(weights)) - diag_deg_and_weight_prod
-
-
+EPSILON = 0.0001
 def qr_decomposition(mat, out = (None, None) ,destructive=False, assume_out_r_is_up_tri=False):
     """
     Returns an orthogonal matrix q and an upper triangular matrix r
@@ -130,7 +89,7 @@ def qr_decomposition(mat, out = (None, None) ,destructive=False, assume_out_r_is
         #     prod = np.inner(q[i],u[j])
         #     r[i,j] = prod
         #     u[j] -= prod*q[i]
-        
+
         remaining_vecs = u[i+1 :]
         if dbg.is_active():
             prods_calc = np.inner(normalized, remaining_vecs)
@@ -147,7 +106,7 @@ def qr_decomposition(mat, out = (None, None) ,destructive=False, assume_out_r_is
     return out_q, out_r
 
 
-def qr_iteration(mat, destructive=False):
+def qr_iteration(mat, destructive=False, epsilon = EPSILON):
     """
     Returns an orthogonal matrix whose columns approach the eigenvectors
     of the input matrix mat and a matrix whose diagonal elements approach
@@ -188,10 +147,10 @@ def qr_iteration(mat, destructive=False):
 
         # Checking if we're close enough to convergence.
         # The parameter rtol is for relative tolerance, setting that to zero
-        # makes the comparison non relative. atol=EPSILON is our absoloute tolerance as wanted.
+        # makes the comparison non relative. atol=epsilon is our absoloute tolerance as wanted.
         is_close_to_convergence = np.allclose(
             abs(e_vec_mat), abs(temp_mat_prod_b),
-            atol=EPSILON, rtol=0)
+            atol=epsilon, rtol=0)
         dbg.print_multiline_vars({
             'e_val_mat (after change)':e_val_mat,
             'temp_mat_prod_b':temp_mat_prod_b,
@@ -206,40 +165,3 @@ def qr_iteration(mat, destructive=False):
         # e_vec_mat.
         e_vec_mat, temp_mat_prod_b = temp_mat_prod_b , e_vec_mat
     return e_val_mat,e_vec_mat
-
-# If k==None, uses the eigengap heuristic
-def k_smallest_eigenvalue_inds(e_vals, k=None):
-    if k is not None:
-        return numpy_utils.argsort_k_smallest(e_vals,k)
-    e_vals_first_half_sort_inds = numpy_utils.argsort_k_smallest(e_vals, len(e_vals)//2+1)
-    e_vals_sorted_first_half = e_vals[e_vals_first_half_sort_inds]
-    e_gaps = np.abs(np.diff(e_vals_sorted_first_half))
-    dbg.print_vars({'e_vals_sorted_first_half':e_vals_sorted_first_half
-        ,'e_gaps':e_gaps})
-    k = np.argmax(e_gaps)+1
-    dbg.print_vars(('k',k))
-    return e_vals_first_half_sort_inds[:k]
-
-def norm_spectral_cluster(samples, k=None):
-    dbg = debug_utils.debug_printer(False)
-    dim = len(samples)
-    l = norm_graph_lap(samples)
-
-    # TODO: rename e_val_mat to e_val_c_mat and e_vec_mat to e_vec_d_mat
-    # (for columns and diagonal, respectively)
-
-    # TODO: check if adding a bit to the diagonal yeilds better clusters
-    PRE_QR_ITERATION_ADDEND = 0 if True else (2*EPSILON)*np.identity(len(l))
-    l+=PRE_QR_ITERATION_ADDEND
-    e_val_mat,e_vec_mat = qr_iteration(l)
-    e_vals = e_val_mat.diagonal()
-    dbg.d_assert(np.all(e_vals>=-EPSILON),
-        "Encountered negative eigenvalues, "
-        + debug_utils.vars_to_str(('e_vals',e_vals)))
-    dbg.print_vars({'e_val_mat':e_val_mat, 'e_vals':e_vals, 'e_vec_mat':e_vec_mat})
-    inds = k_smallest_eigenvalue_inds(e_vals,k)
-    u = e_vec_mat[:,inds]
-    if not numpy_utils.all_rows_nonzero(u):
-        raise RuntimeError("U in the spectral clustering algorithm has a zero row, can not be normalized.")
-    numpy_utils.normalize_rows(u)
-    return kmeans_numpy.k_means(u,u.shape[1],max_iter=300)

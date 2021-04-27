@@ -4,8 +4,7 @@ import sklearn.datasets
 import numpy as np
 import matplotlib.pyplot as plt
 from basic_utils import err_exit_with, arg_to_int, soft_assert
-import kmeans_numpy as km_np
-import algorithms as algs
+from clustering_algs import norm_spectral_clustering, k_means
 
 # TODO measure these
 MAX_NUM_CLUSTERS = 10
@@ -13,36 +12,51 @@ MAX_NUM_SAMPLES = 200
 
 
 
-def run(num_clusters, num_samples, is_random):
-    print(num_clusters,num_samples)
+def run(k, n, is_random):
     """Main function that is called from tasks.py."""
-    try:
-        num_clusters = int(num_clusters)
-        num_samples = int(num_samples)
-    except Exception:
-        soft_assert(False, "K,N should be integers")
 
-    dim = random.randint(2, 3)
     if is_random:
-        num_samples = random.randint(MAX_NUM_SAMPLES // 2, MAX_NUM_SAMPLES)
-        num_clusters = random.randint(MAX_NUM_CLUSTERS // 2, num_samples)
+        min_n = MAX_NUM_SAMPLES // 2
+        max_n = MAX_NUM_SAMPLES
+        min_k = MAX_NUM_CLUSTERS // 2
+        max_k = MAX_NUM_CLUSTERS
 
-    soft_assert(num_clusters > 0, "K must be a positive integer (bigger than 0)")
-    soft_assert(num_samples > 0, "n must be a positive integer (bigger than 0)")
-    soft_assert(num_clusters < num_samples, "K must be smaller than N.")
-    soft_assert(dim > 0, "d must be a positive integer (bigger than 0).")
-    # soft_assert(max_iter >= 0, "MAX_ITER must be a non-negative integer.")
+        # Using max(min_k+1,min_n) for n ensures we don't get n=min_k
+        # without possibilities
+        # Using min(max_k,n-1) for k is required to ensure that we
+        # choose k<n.
+        n = random.randint(max(min_k+1,min_n), max_n)
+        k = random.randint(min_k, min(max_k,n-1))
+        num_search_clusters = None
+    else:
+        if k is None or n is None:
+            err_exit_with(
+                "missing argument k or n (must be suppplied\ with --no-Random)")
+        k = arg_to_int('k', k)
+        n = arg_to_int('n', n)
+        num_search_clusters = k
 
-    print(f"Maximum capacity: K={MAX_NUM_CLUSTERS}, N={MAX_NUM_SAMPLES}")
-    print(f"Running with k={num_clusters}, n={num_samples}")
+    num_samples = n
+    num_gen_clusters = k
+    dim = random.randint(2, 3)
+
+    print(k,num_gen_clusters,num_search_clusters)
+    print(n)
+
+    soft_assert(k > 0, "argument k must be a positive integer (bigger than 0)")
+    soft_assert(n > 0, "argument n must be a positive integer (bigger than 0)")
+    soft_assert(k < n, f"argument k={k} must be smaller than n.")
+
+    print(f"Maximum capacity: k={MAX_NUM_CLUSTERS}, n={MAX_NUM_SAMPLES}")
+    print(f"Running with k={k}, n={n}")
 
     samples, sample_inds = sklearn.datasets.make_blobs(
-        n_samples=num_samples, n_features=dim, centers=num_clusters
+        n_samples=num_samples, n_features=dim, centers=num_gen_clusters
     )
 
     def cluster_set(i, inds):
         """Returns a set with all of sample i's neighboors in the cluster."""
-        return set(j for j, sam in enumerate(samples) if sample_inds[i] == inds[j])
+        return { j for j in range(len(samples)) if sample_inds[i] == inds[j] }
 
     def jaccard_measure(inds):
         """See project specs."""
@@ -59,16 +73,16 @@ def run(num_clusters, num_samples, is_random):
             f.write("%d" % sample_inds[i])
             f.write("\n")
 
-    spectral_inds, spectral_clusters = algs.norm_spectral_cluster(samples, num_clusters)
-    if num_clusters is None:
-        num_clusters = len(spectral_inds)
-    kmeans_inds, kmeans_clusters = km_np.k_means(samples, num_clusters)
+    spectral_inds, spectral_clusters = norm_spectral_clustering(samples, num_search_clusters)
+    if num_search_clusters is None:
+        num_search_clusters = len(spectral_clusters)
+    k_means_inds, k_means_clusters = k_means(samples, num_search_clusters)
 
     with open("clusters.txt", "w") as f:
-        f.write("%d\n" % num_clusters)
-        for inds in [spectral_inds, kmeans_inds]:
+        f.write("%d\n" % num_gen_clusters)
+        for inds in [spectral_inds, k_means_inds]:
             # print(inds)
-            for i in range(num_clusters):
+            for i in range(num_gen_clusters):
                 f.write(",".join("%d" % j for j, x in enumerate(inds) if x == i))
                 f.write("\n")
 
@@ -79,7 +93,7 @@ def run(num_clusters, num_samples, is_random):
         fig, axes = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
     for (title, inds, axis) in zip(
         ["Normalized Spectral Clustering", "K-means"],
-        [spectral_inds, kmeans_inds],
+        [spectral_inds, k_means_inds],
         axes,
     ):
         axis.set_title(title)
@@ -88,7 +102,7 @@ def run(num_clusters, num_samples, is_random):
         else:  # dim==3
             axis.scatter(samples[:, 0], samples[:, 1], samples[:, 2], c=inds)
         axis.grid(True, which="both")
-        axis.set_xlabel(f"Jaccard measure: {jaccard_measure(inds)}")
+        axis.set_xlabel(f"Jaccard measure: {jaccard_measure(inds):.4f}")
     # TODO less ugly text position. y=0.1 looks better but collides with long 2D graphs.
-    fig.text(0.1, 0.0, f"Used constants: n = {num_samples}, k = {num_clusters}")
+    fig.text(0.1, 0.0, f"Used constants: n = {num_samples}, k = {num_gen_clusters}")
     plt.savefig("clusters.pdf")

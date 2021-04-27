@@ -20,5 +20,5 @@ clean :
 .PHONY : clean
 
 zip: 325711942_213056674_project.zip
-325711942_213056674_project.zip: tasks.py main.py algorithms.py kmeans_numpy.py debug_utils.py numpy_utils.py
+325711942_213056674_project.zip: tasks.py main.py clustering_algs.py mat_algs.py numpy_utils.py
 	zip $@ $^
