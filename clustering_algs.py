@@ -183,13 +183,6 @@ def norm_spectral_clustering(samples, k=None):
     dim = len(samples)
     l = _norm_graph_lap(samples)
 
-    # TODO: rename e_val_mat to e_val_c_mat and e_vec_mat to e_vec_d_mat
-    # (for columns and diagonal, respectively)
-
-    # TODO: check if adding a bit to the diagonal yeilds better clusters
-    PRE_QR_ITERATION_ADDEND = 0 if True else (2*EPSILON)*np.identity(len(l))
-    l+=PRE_QR_ITERATION_ADDEND
-
     # Using destructive=True seems to not improve or only negligibly
     # improve performance.
     #e_val_mat,e_vec_mat = mat_algs.qr_iteration(
