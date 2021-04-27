@@ -13,8 +13,10 @@ from basic_utils import err_exit_with, arg_to_int, soft_assert
 from clustering_algs import norm_spectral_clustering, k_means
 
 # TODO measure these
-MAX_NUM_CLUSTERS = 30
-MAX_NUM_SAMPLES = 300
+MAX_CAP_SAMPLES_2 = 301
+MAX_CAP_CLUSTERS_2 = 32
+MAX_CAP_SAMPLES_3 = 300
+MAX_CAP_CLUSTERS_3 = 30
 
 def same_cluster_bool_arr(inds):
     """
@@ -65,24 +67,31 @@ def save_gen_data(out_file_name, samples,cluster_inds):
             f.write(f"{cluster_inds[i]}\n")
 
 
-def get_settings_from_args(k, n, is_random):
+def get_settings_from_args(k, n, is_random, dim):
     """
     Parses the arguments and returns:
     1. The number of samples to generate
     and work with.
     2. The dimension of the samples.
-    3. The number of clusters in the generation.
-    4. The number of clusters to find using the algorithms,
+    3. The maximum capacity for n matching the dimension.
+    4. the maximum capacity for k matching the dimension.
+    5. The number of clusters in the generation.
+    6. The number of clusters to find using the algorithms,
        or None if the eigengap heuristic should be used.
     """
+    if dim is None:
+        dim = random.randint(2, 3)
+    else:
+        dim = arg_to_int('dim', dim)
 
-
+    max_cap_samples = (MAX_CAP_SAMPLES_2,MAX_CAP_SAMPLES_3)[dim-2]
+    max_cap_clusters = (MAX_CAP_CLUSTERS_2,MAX_CAP_CLUSTERS_3)[dim-2]
     if is_random:
-        min_n = MAX_NUM_SAMPLES // 2
-        max_n = MAX_NUM_SAMPLES
+        min_n = max_cap_samples // 2
+        max_n = max_cap_samples
 
-        min_k = MAX_NUM_CLUSTERS // 2
-        max_k = MAX_NUM_CLUSTERS
+        min_k = max_cap_clusters // 2
+        max_k = max_cap_clusters
 
         # Using max(min_k+1,min_n) for n ensures we don't get n=min_k
         # which makes it impossible to choose k<n.
@@ -102,11 +111,12 @@ def get_settings_from_args(k, n, is_random):
 
     num_samples = n
     num_gen_clusters = k
-    dim = random.randint(2, 3)
+    #soft_assert(dim in (2,3), "dim must be 2 or 3.")
     soft_assert(k > 0, "argument k must be a positive integer (bigger than 0)")
     soft_assert(n > 0, "argument n must be a positive integer (bigger than 0)")
     soft_assert(k < n, f"argument k={k} must be smaller than n.")
-    return num_samples, dim, num_gen_clusters, num_search_clusters
+    return num_samples, dim, max_cap_samples, max_cap_clusters,\
+        num_gen_clusters, num_search_clusters
 
 def create_plots(
         out_pdf_file_name,
@@ -141,17 +151,18 @@ def create_plots(
              f"clusters in the algorithms. ")
     plt.savefig(out_pdf_file_name)
 
-def run(k, n, is_random):
+def run(k, n, is_random, dim):
     """Main function that is called from tasks.py."""
 
-    num_samples, dim, num_gen_clusters, num_search_clusters = \
-        get_settings_from_args(k, n, is_random)
+    num_samples, dim, max_cap_samples, max_cap_clusters,\
+        num_gen_clusters, num_search_clusters = get_settings_from_args(
+            k, n, is_random, dim)
 
-    print(f"Maximum capacity: k={MAX_NUM_CLUSTERS}, n={MAX_NUM_SAMPLES}")
     print(
-        f"Running with n={num_samples}, dim={dim}. K={num_gen_clusters}"
+        f"Running with n={num_samples}, dim={dim}. K={num_gen_clusters} "
         f"for generation and k={num_search_clusters} for the clustering "
         f"algorithms.")
+    print(f"Maximum capacity: k={max_cap_clusters}, n={max_cap_samples}")
 
     samples, gen_inds = sklearn.datasets.make_blobs(
         n_samples=num_samples, n_features=dim, centers=num_gen_clusters
